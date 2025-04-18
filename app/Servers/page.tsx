@@ -3,17 +3,9 @@
 import Header from "@/app/Component/header/page";
 import Shoptext from "@/app/Component/header/shoptext/page";
 import ProductDetails from "../productspage/[id]/page";
-import { useState, useEffect } from "react";
+ 
 
-
-// Define the Product interface
-interface Product {
-  id: number;
-  title: string;
-  description: string;
-  price: number;
-  images: string; // Single image or could be an array of images
-}
+ 
 
 // This is the Server Component that will fetch the product data based on params.id
 async function fetchProduct(id: number) {

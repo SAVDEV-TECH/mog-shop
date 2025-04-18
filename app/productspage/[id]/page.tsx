@@ -4,6 +4,7 @@
 
 'use client';
 
+import Image from "next/image"; // Import Image from next/image
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCart } from "@/app/Component/ContextCart/page"; // Import useCart hook
@@ -24,7 +25,7 @@ interface ProductDetailsProps {
   product: Product;
 }
 
-export default function ProductDetails({ product }: ProductDetailsProps) {
+export default function ProductDetails({  }: ProductDetailsProps) {
   const { id } = useParams() as { id: string }; // Ensure id is a string
   const [fetchedProduct, setFetchedProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,7 +34,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   const showToast = () => {
     toast.success("Added to cart! 🛒")}
 
-  const addtocart = (item: Product) => {
+  const addtocart = (product: Product) => {
     dispatch({
       type: "ADD_ITEM",
       item: {
@@ -48,7 +49,10 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
     showToast()
   };
    
-
+  const imageUrl =
+  Array.isArray(fetchedProduct?.images) && fetchedProduct.images[0]
+    ? fetchedProduct.images[0]
+    : "/fallback-image.jpg";
 
   useEffect(() => {
     if (!id) return;
@@ -84,10 +88,15 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   return (
     <div className="shadow-lg gap-1 md:gap-10 flex  justify-center flex-col md:flex-row items-center p-4">
       <div className="w-full md:w-[500px] h-[600px] relative">
-        <img className="w-full h-full object-cover rounded-lg"
-          src={Array.isArray(fetchedProduct?.images) ? fetchedProduct?.images[0] : fetchedProduct?.images || "/fallback-image.png"}
-          alt={fetchedProduct?.title || "Product Image"}
-        />
+       
+<Image
+  src={imageUrl}
+  alt="Product"
+  width={500}
+  height={500}
+  className="w-full h-full object-cover rounded-lg"
+  priority // forces preload for better LCP
+/>
       </div>
 
       <div className="flex gap-4 w-[90%] mx-auto md:w-[400px] flex-col">
@@ -95,8 +104,7 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
         <p className="text-gray-600">{fetchedProduct?.description}</p>
         <button type="button" key={fetchedProduct?.id} onClick={() => addtocart({
                             ...fetchedProduct,
-                            images: Array.isArray(fetchedProduct?.images) ? [fetchedProduct.images[0]] : (Array.isArray(fetchedProduct?.images) ? fetchedProduct.images : ["/fallback-image.png"]),
-                            // rating: fetchedProduct?.rating || 0, // Ensure rating is provided
+                            images: Array.isArray(fetchedProduct?.images) ? [fetchedProduct.images[0]] : ["/fallback-image.png"],
                           })} className="w-full h-[50px] bg-black text-center flex items-center justify-center text-white font-semibold rounded-full hover:bg-gray-800 transition">
                   Add to bag
                 </button>

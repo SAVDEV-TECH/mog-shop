@@ -4,16 +4,16 @@
 import Link from 'next/link'
 import React, { useState } from 'react'
 import { FiSearch } from "react-icons/fi"
-import Search from '@/app/Component/Search/page'
+import Search from '@/app/Component/Search/searchitem'
 import { useCart } from '../ContextCart/page'
 import { GiHamburgerMenu } from "react-icons/gi";
 import { LiaTimesSolid } from "react-icons/lia";
 
 const item_navbar = [
-  { name: 'New features', path: '/Component/Sorting' },
-  { name: 'Men', path:'/Component/DemoSearch' },
-  { name: 'Women', path:'/Component/Sorting' },
-  { name: 'Kids', path:'/Component/Sorting' },
+  { name: 'New features', path: '/new-features' },
+  { name: 'Men', path: '/men' },
+  { name: 'Women', path: '/women' },
+  { name: 'Kids', path: '/kids' }
 ]
 
 function Navbar() {

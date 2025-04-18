@@ -1,6 +1,6 @@
 'use client'
 
-import React,{Children, createContext, ReactNode, useContext, useState, Key} from "react"
+import React,{ createContext, ReactNode, useContext, useState, Key} from "react"
 
 // Define the product type
 interface product {
@@ -8,21 +8,18 @@ interface product {
     price: number;
     rating: ReactNode;
     beauty: ReactNode;
-    images: (images: any) => unknown;
+    images: (images: string[]) => React.ReactNode;
     id: Key | null | undefined;
 }
 
 
-// interface ProductContextProps{
-//     sortedProduct: product[];
-//     setsortedproduct:React.Dispatch<React.SetStateAction<product[]>>;
-// }
+ 
 export interface ProductContextProps {
     // Add existing properties here
     sortedproduct: {
       rating: ReactNode;
       beauty: ReactNode;
-      images: (images: any) => unknown;
+      images: (images: string[]) => React.ReactNode;
       id: Key | null | undefined; title: string; price: number 
 }[]; // Adjust the type as per your data structure
     setsortedproduct: React.Dispatch<React.SetStateAction<product[]>>;
@@ -31,7 +28,7 @@ export interface ProductContextProps {
 
 const productContext=createContext<ProductContextProps  | undefined>(undefined)
 
-export const ProductProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
+export const ProductProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
     const [sortedproduct,setsortedproduct]=useState<product[]>([])
     return (
         <productContext.Provider value={{sortedproduct,setsortedproduct}}>

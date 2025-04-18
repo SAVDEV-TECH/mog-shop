@@ -1,12 +1,11 @@
 
-import Image from "next/image";
  
-import ProductGarage from "./Component/ProductGarage/page";
-import Page from '@/app/productspage/[id]/page'
+ 
+ 
+ 
 import Prodpage from "./Component/Prodpage/page";
-import ContextCart from './Component/cartpage/page'
-import Search from './Component/Search/page'
-import { ProductProvider } from "./Component/Contextsortproduct/page";
+ 
+import { ProductProvider } from "./Contextsortproduct/productSort";
  
 
 export default async function Home() {

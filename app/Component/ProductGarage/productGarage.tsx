@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useProductContext } from '../Contextsortproduct/page';
+import { useProductContext } from '../../Contextsortproduct/productSort';
 
 interface ProductGarageProps {
-  setSlidetoleft: React.Dispatch<React.SetStateAction<boolean>>;
+  setSlidetoleft: React.Dispatch<React.SetStateAction<boolean>>
   slidetoleft: boolean;
   sortType: string;
   setsortproduct: React.Dispatch<React.SetStateAction<string>>;

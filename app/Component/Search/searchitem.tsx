@@ -14,8 +14,14 @@ interface SearchProps {
 
 const Page: React.FC<SearchProps> = ({ isOpen, isClose }) => {
     const [searchquery, setsearchquery] = useState('');
-    const [selectedproduct, setselectedproduct] = useState<any | null>(null);
-    const [result, setresult] = useState([]);
+    // const [selectedproduct, setselectedproduct] = useState<any | null>(null);
+    interface Product {
+        id: number;
+        title: string;
+        images: string;
+    }
+
+    const [result, setresult] = useState<Product[]>([]);
     const [loading, setloading] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
   
@@ -41,7 +47,7 @@ const Page: React.FC<SearchProps> = ({ isOpen, isClose }) => {
         return () => {
             document.removeEventListener("click", handleClick);
         };
-    }, [isOpen]);
+    }, [isOpen,isClose]);
 
     useEffect(() => {
         if (searchquery.length < 2) {
@@ -127,13 +133,13 @@ const Page: React.FC<SearchProps> = ({ isOpen, isClose }) => {
                     transition={{ duration: 0.4, ease: "easeInOut" }}
                     className="mt-4"
                 >
-                    {result.map((item: any) => (
+                    {result.map((item) => (
                         <Link
                             key={item.id}
                             href={`/`}
                             className="p-2 flex items-center justify-between border-b cursor-pointer hover:bg-gray-100"
                             onClick={() => {
-                                setselectedproduct(item);
+                             
                                 isClose();
                             }}
                         >

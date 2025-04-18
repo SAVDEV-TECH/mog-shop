@@ -1,10 +1,10 @@
  "use client";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import ProductGarage from "../ProductGarage/page";
+import ProductGarage from "../ProductGarage/productGarage";
 import { Toaster, toast } from "react-hot-toast";
 import { useCart } from "@/app/Component/ContextCart/page"; // Import useCart hook
-import { useProductContext } from "../Contextsortproduct/page";
+import { useProductContext } from "../../Contextsortproduct/productSort";
 
 const store = [
   {text: "Beef" },
@@ -37,19 +37,19 @@ function Prodpage({ product }: { product: Product[] }) {
     toast.success("Added to cart! 🛒");
   };
 
-  const addToCart = (item: Product) => {
-    dispatch({
-      type: "ADD_ITEM",
-      item:{
-          id: item.id,
-          name: item.title,
-          price: item.price,
-          quantity: 1,
-          images: undefined
-      },
-    });
-    showToast();
-  };
+  // const addToCart = (item: Product) => {
+  //   dispatch({
+  //     type: "ADD_ITEM",
+  //     item:{
+  //         id: item.id,
+  //         name: item.title,
+  //         price: item.price,
+  //         quantity: 1,
+  //         images: undefined
+  //     },
+  //   });
+  //   showToast();
+  // };
 
   useEffect(() => {
     const checkScroll = () => {
@@ -65,7 +65,8 @@ function Prodpage({ product }: { product: Product[] }) {
   return (
     <div>
       <ProductGarage setSlidetoleft={setSlidetoleft} slidetoleft={slidetoleft} sortType={""} setsortproduct={function (value: React.SetStateAction<string>): void {
-        throw new Error("Function not implemented.")} } />
+        throw new Error("Function not implemented.");
+      } }  />
 
       <div className="w-[92%] flex flex-col relative p-3 md:flex-row mx-auto gap-2 justify-center">
         { isMobile ?
