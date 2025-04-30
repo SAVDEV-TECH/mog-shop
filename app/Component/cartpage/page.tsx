@@ -11,8 +11,8 @@ export default function CartPage() {
         <p>Your cart is empty.</p>
       ) : (
         <ul>
-          {state.items.map((item) => (
-            <li key={item.id} className="flex justify-between border-b p-2">
+          {state.items.map((item, id) => (
+            <li key={id} className="flex justify-between border-b p-2">
               <div>
                 {item.name} - ${item.price} x {item.quantity}
               </div>

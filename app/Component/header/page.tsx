@@ -23,12 +23,12 @@ function Navbar() {
    const showslidenav=()=>{
     setshowNavbar(!showNavbar)
    }
-   const isMobile = typeof window !== "undefined" && window.innerWidth <= 768;
+  //  const isMobile = typeof window !== "undefined" && window.innerWidth <= 768;
    
   return (
-    <div className='flex w-full px-14 h-[50px]   gap-9 items-center justify-between'>
+    <div className='flex w-full px-14 h-[50px]    gap-9 items-center justify-between'>
       {/* Logo or icon */}
-      <div>
+      <div className=''> 
         <svg aria-hidden="true" viewBox="0 0 24 24" role="img" width="74px" height="74px" fill="none">
           <path fill="currentColor" fillRule="evenodd" d="M21 8.719L7.836 14.303C6.74 14.768 5.818 15 5.075 15c-.836 0-1.445-.295-1.819-.884-.485-.76-.273-1.982.559-3.272.494-.754 1.122-1.446 1.734-2.108-.144.234-1.415 2.349-.025 3.345.275.2.666.298 1.147.298.386 0 .829-.063 1.316-.19L21 8.719z" clipRule="evenodd"></path>
         </svg>
@@ -36,11 +36,26 @@ function Navbar() {
 
       {/* Nav Links */}
        
-      <div className={`${isMobile && showNavbar ?' translate-x-0] z-20':'translate-x-[500px] z-10' } md:static md:flex-row md:h-auto md:bg-transparent fixed flex-col ease-in-out  transform transition-[transform] right-0 top-[0] h-[100vh] bg-white  md:flex items-center`}>
+      <div
+  className={`
+    ${showNavbar ? 'translate-x-0' : 'translate-x-full'} 
+    fixed md:static 
+    md:translate-x-[100px]
+    top-0 right-0 h-screen md:h-auto 
+    w-[300px] md:w-max 
+    flex flex-col md:flex-row 
+    items-center md:justify-between 
+    bg-white 
+    transition-transform duration-300 ease-in-out 
+    z-20
+  `}
+>
+
+
       <div onClick={()=>setshowNavbar(false)}  className="p-4 md:hidden flex cursor-pointer bg-white">
         <LiaTimesSolid size={20}></LiaTimesSolid>
       </div>
-    <ul className='flex w-[300px] gap-3  md:flex-row flex-col'> 
+    <ul className='flex w-[300px] gap-3  md:w-max    md:flex-row flex-col'> 
         {item_navbar.map((item, id) =>
           item.path ? (
             <li key={id}>

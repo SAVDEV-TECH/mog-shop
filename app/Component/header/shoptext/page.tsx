@@ -7,7 +7,7 @@ import { FaAngleRight } from "react-icons/fa6";
 import { FaAngleLeft } from "react-icons/fa6";
 
 
-function page() {
+function Page() {
   const [Slider, setSlider]=useState(0)
   const moveleft=()=>{
     setSlider((prev)=> (prev + 1 ) % slides.length)
@@ -46,4 +46,4 @@ function page() {
   )
 }
 
-export default page
+export default Page

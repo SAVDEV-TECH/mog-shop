@@ -28,7 +28,7 @@ export interface ProductContextProps {
 
 const productContext=createContext<ProductContextProps  | undefined>(undefined)
 
-export const ProductProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+export  const ProductProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
     const [sortedproduct,setsortedproduct]=useState<product[]>([])
     return (
         <productContext.Provider value={{sortedproduct,setsortedproduct}}>

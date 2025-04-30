@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    domains: ["cdn.dummyjson.com"], 
+    minimumCacheTTL: 60, // Cache images for 60 seconds// allow external image URLs from this domain
+  },
 };
 
 export default nextConfig;
+
