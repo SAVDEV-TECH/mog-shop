@@ -13,7 +13,7 @@ interface ProductGarageProps {
 
 function ProductGarage({ setSlidetoleft, slidetoleft}: ProductGarageProps) {
   // const { sortedproduct, setsortedproduct } = useProductContext();
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
 
   // const fetchProducts = async () => {
   //   setLoading(true);
@@ -95,7 +95,7 @@ function ProductGarage({ setSlidetoleft, slidetoleft}: ProductGarageProps) {
         </select>
       </div>
 
-      {loading && <p>Loading products...</p>} {/* Optional Loading Message */}
+      {/* {loading && <p>Loading products...</p>} Optional Loading Message */}
     </div>
   );
 }
