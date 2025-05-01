@@ -1,6 +1,6 @@
 "use client"
 
-import { ProductContextProps } from '@/app/Contextsortproduct/productSort';
+// import { ProductContextProps } from '@/app/Contextsortproduct/productSort';
 import dynamic from 'next/dynamic'
 // import ProductDetailsPage from "@/app/Component/ProductDetailpage/ProductDetailpage";
 // import react from 'react'
