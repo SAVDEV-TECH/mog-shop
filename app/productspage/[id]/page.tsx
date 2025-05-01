@@ -1,4 +1,4 @@
-import ProductDetailpage from "@/app/Component/ProductpageWraper/page";
+import ProductDetailpage from "@/app/Component/ProductpageWraper/ProductpageWraper";
 
 async function fetchProduct(id: number) {
   const response = await fetch(`https://dummyjson.com/products/${id}`);
