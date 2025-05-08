@@ -10,13 +10,16 @@ interface Product {
   beauty: string;
 }
 
-export default async function Page({
-  params,
-}: {
-  params: { id: string };
-}) {
-  // Validate the ID parameter
+// Correct PageProps interface
+interface PageProps {
+  params: {
+    id: string;
+  };
+}
+
+export default async function Page({ params }: PageProps) {
   const productId = Number(params.id);
+  
   if (isNaN(productId)) {
     return <div>Invalid product ID</div>;
   }
