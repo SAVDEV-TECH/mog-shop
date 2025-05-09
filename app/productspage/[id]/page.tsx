@@ -1,4 +1,5 @@
-import ProductDetailpage from "@/app/Component/ProductpageWraper/ProductpageWraper";
+import ProductDetailpage from '@/app/Component/ProductpageWraper/ProductpageWraper'
+
 
 interface Product {
   id: number;
