@@ -8,7 +8,11 @@ export interface Product {
   rating: number
   beauty: string
 }
-
+interface PageProps{
+  params:{
+    id:string;
+  }
+}
 export default async function Page({ params }: PageProps) {
   const productId = parseInt(params.id)
   
