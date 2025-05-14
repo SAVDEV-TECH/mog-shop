@@ -1,4 +1,5 @@
-import ProductDetailpage from '@/app/Component/ProductpageWraper/ProductpageWraper'
+ import ProductDetailpage from '@/app/Component/ProductpageWraper/ProductpageWraper'
+
 export interface Product {
   id: number
   title: string
@@ -8,11 +9,49 @@ export interface Product {
   rating: number
   beauty: string
 }
+
 interface PageProps{
   params:{
     id:string;
   }
 }
+
+// Add this function to pre-generate static paths
+export async function generateStaticParams() {
+  try {
+    // Fetch a list of all products to get their IDs
+    const response = await fetch('https://dummyjson.com/products?limit=100');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Return an array of objects with the id parameter as string
+    return data.products.map((product: Product) => ({
+      id: product.id.toString(),
+    }));
+  } catch (error) {
+    console.error('Error generating static params:', error);
+    // Provide at least some default IDs to pre-render
+    return [
+      { id: '1' },
+      { id: '2' },
+      { id: '3' },
+      { id: '4' },
+      { id: '5' },
+      { id: '6' },
+      { id: '7' },
+      { id: '8' },
+      { id: '9' },
+      { id: '10' },
+
+
+      // Add more IDs as needed
+    ];
+  }
+}
+
 export default async function Page({ params }: PageProps) {
   const productId = parseInt(params.id)
   

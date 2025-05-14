@@ -2,7 +2,7 @@
 
 const nextConfig: NextConfig = {
   // Required for Cloudflare Pages (static export)
-  output: "export", // Remove this if using SSR/Edge runtime
+   
   
   // Image Optimization (works only with `next start` or Vercel)
   images: {
