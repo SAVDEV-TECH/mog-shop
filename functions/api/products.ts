@@ -1,3 +1,5 @@
+ 
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
  export const onRequestGet = async (context: any) => {
   try {
     // Add timeout to prevent hanging requests
