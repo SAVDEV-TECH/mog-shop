@@ -1,26 +1,20 @@
  import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Required for Cloudflare Pages (static export)
-   
-  
-  // Image Optimization (works only with `next start` or Vercel)
+  // Images configuration for external domains
   images: {
     domains: ["cdn.dummyjson.com"],
     minimumCacheTTL: 60,
-    unoptimized: true, // Disable optimization for static export
+    unoptimized: true,
   },
 
-  // TypeScript
+  // TypeScript configuration
   typescript: {
     tsconfigPath: "./tsconfig.json",
   },
-
-  // Optional: Enable Edge Runtime if using Cloudflare Workers
-  // experimental: {
-  //   runtime: "experimental-edge",
-  // },
+  
+  // Explicitly set output to not use 'export' for Vercel deployment
+  // output: 'export', // Commented out for Vercel deployment
 };
 
 export default nextConfig;
-
