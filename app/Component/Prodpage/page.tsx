@@ -107,8 +107,7 @@ function Prodpage() {
         {/* Sidebar for categories (mobile or desktop) */}
         {(isMobile || slidetoleft) && (
           <div
-            className={`${
-              isfixed ? "sticky top-10" : ""
+            className={`${ isfixed ? "  md:sticky top-10" : ""
             } md:overflow-y-scroll w-full md:h-[80vh] md:w-[20%]`}
           >
             <h2 className="flex justify-between md:border-b border-gray-400 pb-7 gap-3 items-center">

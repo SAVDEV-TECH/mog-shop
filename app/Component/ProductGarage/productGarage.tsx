@@ -2,7 +2,7 @@
 
 "use client";
 
-import React from "react";
+import React  from "react";
 // import { useProductContext } from "../../Contextsortproduct/productSort";
 
 interface ProductGarageProps {
