@@ -1,4 +1,4 @@
- "use client";
+"use client";
 import { useCart } from "@/app/Component/ContextCart/page";
 import { useAuth } from "@/app/ContextAuth/Authcontext";
 import { useRouter } from "next/navigation";
@@ -7,10 +7,39 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
+interface PaystackSetupOptions {
+  key: string;
+  email: string;
+  amount: number;
+  currency?: string;
+  ref?: string;
+  callback?: (response: PaystackResponse) => void;
+  onClose?: () => void;
+}
+
+interface PaystackResponse {
+  reference?: string;
+  status?: string;
+  message?: string;
+}
+
+interface PaystackHandler {
+  openIframe: () => void;
+}
+
 declare global {
   interface Window {
-    PaystackPop?: unknown;
+    PaystackPop?: {
+      setup: (options: PaystackSetupOptions) => PaystackHandler;
+    };
   }
+}
+
+interface CustomerInfo {
+  email?: string;
+  address?: string;
+  phone?: string;
+  fullName?: string;
 }
 
 export default function PaymentPage() {
@@ -18,13 +47,6 @@ export default function PaymentPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [paymentMethod, setPaymentMethod] = useState<"paystack" | "pod" | "">("");
-  interface CustomerInfo {
-    email?: string;
-    address?: string;
-    phone?: string;
-    fullName?: string;
-  }
-
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -89,28 +111,28 @@ export default function PaymentPage() {
   };
 
   // Send email notification (This should ideally be done via a backend/cloud function)
-    const sendOrderNotification = async (
-      orderId: string,
-      orderData: { userEmail?: string | null; total?: number }
-    ) => {
-      try {
-        // You would typically call a cloud function or API endpoint here
-        // For now, we'll just log it
-        console.log("Sending order notification email...", {
-          to: orderData.userEmail,
-          orderId: orderId,
-          total: orderData.total,
-        });
-  
-        // Example: Call your cloud function
-        // await fetch('/api/send-order-email', {
-        //   method: 'POST',
-        //   body: JSON.stringify({ orderId, orderData })
-        // });
-      } catch (error) {
-        console.error("Error sending notification: ", error);
-      }
-    };
+  const sendOrderNotification = async (
+    orderId: string,
+    orderData: { userEmail?: string | null; total?: number }
+  ) => {
+    try {
+      // You would typically call a cloud function or API endpoint here
+      // For now, we'll just log it
+      console.log("Sending order notification email...", {
+        to: orderData.userEmail,
+        orderId: orderId,
+        total: orderData.total,
+      });
+
+      // Example: Call your cloud function
+      // await fetch('/api/send-order-email', {
+      //   method: 'POST',
+      //   body: JSON.stringify({ orderId, orderData })
+      // });
+    } catch (error) {
+      console.error("Error sending notification: ", error);
+    }
+  };
 
   const handlePaystackPayment = async () => {
     setLoading(true);
@@ -122,13 +144,13 @@ export default function PaymentPage() {
       return;
     }
 
-    const handler = (window.PaystackPop as any).setup({
+    const handler = window.PaystackPop.setup({
       key: "pk_test_c96cccb18b1d6540ead612acc09289a21aaee16f", // Replace with your Paystack public key
-  email: customerInfo!.email || '',
+      email: customerInfo!.email || '',
       amount: grandTotal * 100, // Paystack expects amount in kobo
       currency: "NGN",
       ref: "ORD_" + Math.floor(Math.random() * 1000000000) + Date.now(),
-      callback: async function (response: { reference?: string }) {
+      callback: async function (response: PaystackResponse) {
         try {
           // Save order to Firebase
           const orderId = await saveOrderToFirebase("paystack", response.reference);
