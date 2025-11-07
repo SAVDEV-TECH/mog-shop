@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from 'react';
+import Image from 'next/image';
 
 /* Lightweight local SVG icon components to avoid depending on 'lucide-react' */
 const Mail = (props: React.SVGProps<SVGSVGElement>) => (
@@ -114,19 +115,26 @@ export default function MogShopAuth() {
       <div className="w-full max-w-md">
         {/* Mog Shop Logo */}
         <div className="flex justify-center mb-8">
-          <img 
-            src="https://raw.githubusercontent.com/user-attachments/assets/your-logo-path" 
-            alt="Mog Shop"
-            className="w-32 h-32 object-contain"
-            onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-              // Fallback to inline SVG if image fails to load
-              const img = e.currentTarget;
-              img.style.display = 'none';
-              const next = img.nextElementSibling as HTMLElement | null;
-              if (next) next.style.display = 'block';
-            }}
-          />
-          <svg className="w-32 h-32 hidden" viewBox="0 0 200 200" fill="none">
+          <div className="relative w-32 h-32">
+            <Image
+              src="https://raw.githubusercontent.com/user-attachments/assets/your-logo-path"
+              alt="Mog Shop"
+              width={128}
+              height={128}
+              className="object-contain"
+              unoptimized
+              onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+          const img = e.currentTarget as HTMLImageElement;
+          img.style.display = 'none';
+          // next sibling is the SVG wrapper (we keep the SVG next to the Image wrapper)
+          const wrapper = img.closest('div');
+          const next = wrapper?.nextElementSibling as HTMLElement | null;
+          if (next) next.style.display = 'block';
+              }}
+            />
+          </div>
+
+          <svg className="w-32 h-32 hidden" viewBox="0 0 200 200" fill="none" aria-hidden>
             {/* Shopping cart */}
             <path d="M60 100 L140 100 L150 140 L50 140 Z" fill="#1e5a8e" stroke="#1e5a8e" strokeWidth="4"/>
             <path d="M140 100 L150 70 L50 70 L60 100" fill="#1e5a8e"/>
