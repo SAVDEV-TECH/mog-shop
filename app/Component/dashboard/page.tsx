@@ -13,6 +13,7 @@
 // ====== DASHBOARD PAGE (app/dashboard/page.tsx) ======
 "use client";
 import { useEffect, useState } from "react";
+import Image from 'next/image'
 import { useAuth } from "@/app/ContextAuth/Authcontext";
 import { useRouter } from "next/navigation";
 import { 
@@ -672,13 +673,16 @@ export default function DashboardPage() {
                     <tr key={product.id} className="border-b hover:bg-gray-50">
                       <td className="py-4 px-6">
                         {product.image ? (
-                          <img 
-                            src={product.image} 
+                          <Image
+                            src={String(product.image)}
                             alt={product.name}
-                            className="w-12 h-12 object-cover rounded-lg border"
-                            onError={(e) => {
+                            width={48}
+                            height={48}
+                            className="object-cover rounded-lg border"
+                            unoptimized
+                            onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                               console.log("❌ Image failed to load:", product.image);
-                              const target = e.target as HTMLImageElement;
+                              const target = e.currentTarget as HTMLImageElement;
                               target.onerror = null; // Prevent infinite loop
                               target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%23e5e7eb'/%3E%3Ctext x='24' y='28' font-family='Arial' font-size='24' text-anchor='middle'%3E📦%3C/text%3E%3C/svg%3E";
                             }}
@@ -938,10 +942,13 @@ export default function DashboardPage() {
                       <label htmlFor="image-upload" className="cursor-pointer">
                         {imagePreview ? (
                           <div>
-                            <img 
-                              src={imagePreview} 
-                              alt="Preview" 
+                            <Image
+                              src={imagePreview}
+                              alt="Preview"
+                              width={320}
+                              height={192}
                               className="max-h-48 mx-auto mb-3 rounded-lg"
+                              unoptimized
                             />
                             <p className="text-sm text-blue-600 font-medium">Click to change image</p>
                           </div>
@@ -975,13 +982,16 @@ export default function DashboardPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="https://example.com/image.jpg"
                     />
-                    {imagePreview && (
+                        {imagePreview && (
                       <div className="mt-3 border rounded-lg p-3">
                         <p className="text-sm text-gray-600 mb-2">Preview:</p>
-                        <img 
-                          src={imagePreview} 
-                          alt="Preview" 
+                        <Image
+                          src={imagePreview}
+                          alt="Preview"
+                          width={320}
+                          height={192}
                           className="max-h-48 mx-auto rounded-lg"
+                          unoptimized
                           onError={() => setImagePreview("")}
                         />
                       </div>

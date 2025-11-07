@@ -4,8 +4,19 @@ import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
+interface ProductCheck {
+  id: string;
+  name?: string;
+  price?: number;
+  stock?: number;
+  category?: string;
+  image?: string;
+  images?: unknown;
+  [key: string]: unknown;
+}
+
 export default function CheckProducts() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<ProductCheck[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

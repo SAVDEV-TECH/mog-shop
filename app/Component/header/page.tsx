@@ -2,6 +2,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import React, { useState } from 'react'
 import { FiSearch } from "react-icons/fi"
 import Search from '@/app/Component/Search/searchitem'
@@ -35,10 +36,13 @@ function Navbar() {
         {/* Logo */}
         <div className='flex-shrink-0'> 
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <img 
-              src="/mog.png" 
-              alt="Mogshop Logo" 
+            <Image
+              src="/mog.png"
+              alt="Mogshop Logo"
+              width={64}
+              height={64}
               className="h-10 sm:h-14 md:h-16 w-auto"
+              unoptimized
             />
             <h1 className='text-base sm:text-lg md:text-xl font-bold'>
               Mogshop
