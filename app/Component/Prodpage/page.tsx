@@ -1,8 +1,9 @@
- "use client";
+    "use client";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import ProductGarage from "../ProductGarage/productGarage";
 import Image from "next/image";
+import { useCart } from "../ContextCart/page";
 
 const store = [
   { text: "Beef" },
@@ -14,14 +15,11 @@ const store = [
 ];
 
 interface ProductsParam {
-  id: number;
-  images: string[];
-  title: string;
-  rating: number;
-  price: number; // Changed to number to match DummyJSON response
-  category: string; // Added category to enable filtering
-  thumbnail: string; // Added thumbnail for backup image
-  description: string; // Added description for future use
+  id: string;
+  imageUrl: string;
+  name: string;
+  price: number;
+  category?: string;
 }
 
 function Prodpage() {
@@ -32,6 +30,8 @@ function Prodpage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  
+  const { dispatch } = useCart(); // Add cart context
   
   // Categories state derived from products
   const [categories, setCategories] = useState<string[]>([]);
@@ -51,8 +51,7 @@ function Prodpage() {
       setLoading(true);
       setError(null);
       try {
-        // Replace with your Cloudflare Worker URL in production
-        const res = await fetch("https://dummyjson.com/products", {
+        const res = await fetch("/api/products", {
           headers: {
             'Accept': 'application/json'
           }
@@ -63,21 +62,22 @@ function Prodpage() {
         }
         
         const data = await res.json();
-        
-        if (!data || !data.products || !Array.isArray(data.products)) {
+        if (!data || !Array.isArray(data)) {
           throw new Error("Invalid data format received");
         }
+
+        setProducts(data);
         
-        setProducts(data.products);
-        
-        // Extract unique categories from products
-        const uniqueCategories = Array.from(new Set<string>(data.products.map((p: ProductsParam) => p.category)));
+        const uniqueCategories = Array.from(
+          new Set<string>(data.map((p: ProductsParam) => p.category || "Uncategorized"))
+        );
+
         setCategories(uniqueCategories);
-        
         setLoading(false);
-      } catch (err: any) {
-        console.error("Failed to fetch products:", err);
-        setError(err.message || "Failed to load products");
+      } catch (err: unknown) {
+        console.log("Failed to fetch products:", err);
+        const message = err instanceof Error ? err.message : String(err);
+        setError(message || "Failed to load products");
         setLoading(false);
       }
     }
@@ -94,6 +94,23 @@ function Prodpage() {
     return () => window.removeEventListener("resize", checkisMobile);
   }, []);
 
+  // Add to cart handler
+  const handleAddToCart = (product: ProductsParam, e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation when clicking add to cart
+    e.stopPropagation();
+    
+    dispatch({
+      type: "ADD_ITEM",
+      item: {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        images: product.imageUrl,
+        quantity: 1,
+      },
+    });
+  };
+
   // Filter products by category if one is selected
   const filteredProducts = selectedCategory
     ? products.filter(product => product.category === selectedCategory)
@@ -107,8 +124,7 @@ function Prodpage() {
         {/* Sidebar for categories (mobile or desktop) */}
         {(isMobile || slidetoleft) && (
           <div
-            className={`${ isfixed ? "  md:sticky top-10" : ""
-            } md:overflow-y-scroll w-full md:h-[80vh] md:w-[20%]`}
+            className={`${isfixed ? "md:sticky top-10" : ""} md:overflow-y-scroll w-full md:h-[80vh] md:w-[20%]`}
           >
             <h2 className="flex justify-between md:border-b border-gray-400 pb-7 gap-3 items-center">
               <p className="text-[20px] text-nowrap">Pick up today</p>
@@ -117,7 +133,6 @@ function Prodpage() {
               </span>
             </h2>
             
-            {/* Display dynamically fetched categories instead of hardcoded ones */}
             <div className="mt-4 mb-2 font-bold">Categories</div>
             <ul className="flex flex-row gap-2 md:flex-col w-full">
               <li>
@@ -180,38 +195,47 @@ function Prodpage() {
           ) : filteredProducts.length ? (
             // Show products
             filteredProducts.map((product: ProductsParam) => {
-              // Use thumbnail as primary image source, fallback to first image in array, then default image
-              const imageSrc = product.thumbnail || 
-                (Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : "/globe.svg");
-              
               return (
-                <Link
+                <div
                   key={product.id}
-                  href={`/productspage/${product.id}`}
                   className="group relative font-bold inline-block border p-4 rounded-lg shadow-md transition-transform duration-300 hover:scale-[1.05]"
                 >
                   <span className="absolute inset-0 bg-gray-300 opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-2xl pointer-events-none" />
 
                   <div>
                     <Image
-                      src={(imageSrc || "/globe.svg").trim()}
-                      alt={product.title || "Product Image"}
+                      src={product.imageUrl || "/globe.svg"}
+                      alt={product.name || "Product Image"}
                       width={300}
                       height={200}
                       className="object-contain w-[60%] h-[150px] md:h-[200px] mx-auto"
                       loading="lazy"
                       onError={(e) => {
-                        // Fallback if image fails to load
                         const target = e.target as HTMLImageElement;
                         target.src = "/globe.svg";
                       }}
                     />
-                    <div className="pl-2 mt-2 text-sm md:text-base font-medium truncate">{product.title}</div>
-                    <div className="pl-2 text-green-700">${product.price}</div>
-                    <div className="pl-2 text-yellow-500">⭐ {product.rating}</div>
+                    <div className="pl-2 mt-2 text-sm md:text-base font-medium truncate">{product.name}</div>
+                    <div className="pl-2 text-green-700">#{product.price}</div>
                     <div className="pl-2 mt-1 text-xs text-gray-500">{product.category}</div>
+                    
+                    {/* Buttons */}
+                    <div className="flex flex-col gap-2 mt-3">
+                      <Link
+                        href={`/ProductDetailpage/${product.id}`}
+                        className="w-full bg-blue-600 text-white text-center py-2 px-3 rounded text-xs md:text-sm hover:bg-blue-700 transition"
+                      >
+                        View Product
+                      </Link>
+                      <button
+                        onClick={(e) => handleAddToCart(product, e)}
+                        className="w-full bg-black text-white py-2 px-3 rounded text-xs md:text-sm hover:bg-gray-800 transition"
+                      >
+                        Add to Cart
+                      </button>
+                    </div>
                   </div>
-                </Link>
+                </div>
               );
             })
           ) : (

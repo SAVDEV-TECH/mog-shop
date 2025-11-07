@@ -4,16 +4,15 @@
 import dynamic from 'next/dynamic'
  
 interface product {
-    id: number;
-    title: string;
+    id: string;
+    name: string;
     price: number;
-    description: string;
-    images: string[];
-    rating: number; // Add the missing rating property
-    beauty: string; // Add the missing beauty property
-  }
+    rating?: number;
+    category: string;
+    imageUrl: string;
+}
 
-const ProductDetailspage =dynamic(()=>import("@/app/Component/ProductDetailpage/ProductDetailpage"),{ssr:false})
+const ProductDetailspage =dynamic(()=>import("@/app/ProductDetailpage/ProductDetailpage"),{ssr:false})
  export default function ProductDetailpage ({product}:{product:product}){
 return <ProductDetailspage product={product}></ProductDetailspage>
  }

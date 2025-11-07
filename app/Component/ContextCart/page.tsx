@@ -1,98 +1,125 @@
- 
-"use client"
-import React, { createContext, useContext, useReducer } from 'react';
+ "use client";
+import React, { createContext, useContext, useReducer, useMemo } from "react";
 
-// Define the shape of the cart item
+// ====== Type definitions ======
 interface CartItem {
-    images: string | undefined;
-    id: number;
-    name: string;
-    price: number;
-    quantity: number;
+  images?: string;
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
 }
 
-// Define the shape of the cart state
 interface CartState {
-    items: CartItem[];
+  items: CartItem[];
 }
 
-// Define the actions for the cart reducer
 type CartAction =
-    | { type: 'ADD_ITEM'; item: CartItem }
-    | { type: 'REMOVE_ITEM'; id: number }
-    | { type: 'CLEAR_CART' };
+  | { type: "ADD_ITEM"; item: CartItem }
+  | { type: "REMOVE_ITEM"; id: string }
+  | { type: "INCREASE_QUANTITY"; id: string }
+  | { type: "DECREASE_QUANTITY"; id: string }
+  | { type: "CLEAR_CART" };
 
-// Create a context for the cart
+// ====== Create context ======
 const CartContext = createContext<{
-    state: CartState;
-    dispatch: React.Dispatch<CartAction>;
-} | undefined>(undefined);
+  state: CartState;
+  dispatch: React.Dispatch<CartAction>;
+  total: number;
+} | null>(null);
 
-// Define the initial state of the cart
+// ====== Initial state ======
 const initialState: CartState = {
-    items: [],
+  items: [],
 };
 
-// Create a reducer to manage the cart state
+// ====== Reducer ======
 function cartReducer(state: CartState, action: CartAction): CartState {
-    switch (action.type) {
-        case 'ADD_ITEM':
-            return {
-                ...state,
-                items: [...state.items, action.item],
-            };
-        case 'REMOVE_ITEM':
-            return {
-                ...state,
-                items: state.items.filter(item => item.id !== action.id),
-            };
-        case 'CLEAR_CART':
-            return initialState;
-        default:
-            throw new Error(`Unhandled action type: ${(action as CartAction).type}`);
+  switch (action.type) {
+    case "ADD_ITEM": {
+      const existing = state.items.find((item) => item.id === action.item.id);
+      if (existing) {
+        // increase quantity if item already in cart
+        return {
+          ...state,
+          items: state.items.map((item) =>
+            item.id === action.item.id
+              ? { ...item, quantity: item.quantity + 1 }
+              : item
+          ),
+        };
+      } else {
+        return {
+          ...state,
+          items: [...state.items, { ...action.item, quantity: 1 }],
+        };
+      }
     }
+
+    case "REMOVE_ITEM":
+      return {
+        ...state,
+        items: state.items.filter((item) => item.id !== action.id),
+      };
+
+    case "INCREASE_QUANTITY":
+      return {
+        ...state,
+        items: state.items.map((item) =>
+          item.id === action.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        ),
+      };
+
+    case "DECREASE_QUANTITY":
+      return {
+        ...state,
+        items: state.items
+          .map((item) =>
+            item.id === action.id
+              ? { ...item, quantity: Math.max(item.quantity - 1, 1) }
+              : item
+          )
+          .filter((item) => item.quantity > 0),
+      };
+
+    case "CLEAR_CART":
+      return initialState;
+
+    default:
+      throw new Error(`Unhandled action type`);
+  }
 }
 
-// Create a provider component for the cart context
-export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [state, dispatch] = useReducer(cartReducer, initialState);
+// ====== Provider ======
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [state, dispatch] = useReducer(cartReducer, initialState);
 
-    return (
-        <CartContext.Provider value={{ state, dispatch }}>
-            {children}
-        </CartContext.Provider>
-    );
+  // Memoized total calculation
+  const total = useMemo(
+    () =>
+      state.items.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      ),
+    [state.items]
+  );
+
+  return (
+    <CartContext.Provider value={{ state, dispatch, total }}>
+      {children}
+    </CartContext.Provider>
+  );
 };
 
-// Create a custom hook to use the cart context
+// ====== Hook ======
 export const useCart = () => {
-    const context = useContext(CartContext);
-    if (!context) {
-        throw new Error('useCart must be used within a CartProvider');
-    }
-    return context;
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error("useCart must be used within a CartProvider");
+  }
+  return context;
 };
-
-// Example of a component that uses the cart context
-const Cart: React.FC = () => {
-    const { state, dispatch } = useCart();
-
-    return (
-        <div>
-            <h2>Shopping Cart</h2>
-            <ul>
-                {state.items.map(item =>(
-                    <li key={item.id}>
-                        {item.name} - ${item.price} x {item.quantity}
-                        <button onClick={() => dispatch({ type: 'REMOVE_ITEM', id: item.id })}>
-                            Remove
-                        </button>
-                    </li>
-                ))}
-            </ul>
-            <button onClick={ () => dispatch({ type: 'CLEAR_CART' })}>Clear Cart</button>
-        </div>
-    );
-};
-
-export default Cart;

@@ -12,15 +12,34 @@ interface SearchProps {
 
 const Page: React.FC<SearchProps> = ({ isOpen, isClose }) => {
     const [searchquery, setsearchquery] = useState('');
+    
     interface Product {
-        id: number;
-        title: string;
-        images: string[];
+        id: string;
+        name: string;
+        imageUrl: string;
+        price: number;
+        category?: string;
     }
 
     const [result, setresult] = useState<Product[]>([]);
+    const [allProducts, setAllProducts] = useState<Product[]>([]);
     const [loading, setloading] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
+
+    // Fetch all products once when component mounts
+    useEffect(() => {
+        const fetchAllProducts = async () => {
+            try {
+                const response = await fetch('/api/products');
+                const data = await response.json();
+                setAllProducts(data);
+            } catch (error) {
+                console.log('Error fetching products:', error);
+            }
+        };
+
+        fetchAllProducts();
+    }, []);
 
     useEffect(() => {
         const handleClick = (event: MouseEvent) => {
@@ -42,22 +61,23 @@ const Page: React.FC<SearchProps> = ({ isOpen, isClose }) => {
         };
     }, [isOpen, isClose]);
 
+    // Search products based on name
     useEffect(() => {
         if (searchquery.length < 2) {
             setresult([]);
             return;
         }
 
-        const fetchresult = async () => {
-            setloading(true);
-            const dataapi = await fetch(`https://dummyjson.com/products/search?q=${encodeURIComponent(searchquery)}`);
-            const res = await dataapi.json();
-            setresult(res.products);
-            setloading(false);
-        };
-
-        fetchresult();
-    }, [searchquery]);
+        setloading(true);
+        
+        // Filter products by name (case-insensitive)
+        const filtered = allProducts.filter(product =>
+            product.name.toLowerCase().includes(searchquery.toLowerCase())
+        );
+        
+        setresult(filtered);
+        setloading(false);
+    }, [searchquery, allProducts]);
 
     return (
         <div>
@@ -92,7 +112,7 @@ const Page: React.FC<SearchProps> = ({ isOpen, isClose }) => {
                                 <input
                                     value={searchquery}
                                     onChange={(e) => setsearchquery(e.target.value)}
-                                    className=" w-[50%] md:w-[600px] group hover:bg-slate-300 outline-none flex-grow rounded-r-[30px] py-[6px] bg-[#e5e5e5]"
+                                    className="w-[50%] md:w-[600px] group hover:bg-slate-300 outline-none flex-grow rounded-r-[30px] py-[6px] bg-[#e5e5e5]"
                                     type="text"
                                     placeholder="search"
                                 />
@@ -106,25 +126,33 @@ const Page: React.FC<SearchProps> = ({ isOpen, isClose }) => {
                             </h3>
                         </div>
 
-                        {loading && <li>Loading...</li>}
+                        {loading && <p className="mt-4 text-center">Loading...</p>}
+
+                        {searchquery.length >= 2 && !loading && result.length === 0 && (
+                            <p className="mt-4 text-center text-gray-500">No products found</p>
+                        )}
 
                         <ul className="mt-4">
                             {result.map((item) => (
                                 <Link
                                     key={item.id}
                                     href={`/productspage/${item.id}`}
-                                    className="p-2 flex items-center justify-between border-b cursor-pointer hover:bg-gray-100"
+                                    className="p-2 flex items-center gap-4 border-b cursor-pointer hover:bg-gray-100"
                                     onClick={() => isClose()}
                                 >
-                                    {item.title}
                                     <Image
-                                        src={item.images[0] || "/globe.svg"}
-                                        alt={item.title || "Product Image"}
-                                        width={300}
-                                        height={200}
-                                        className="object-contain w-[60%] h-[150px] md:h-[200px] mx-auto"
+                                        src={item.imageUrl || "/globe.svg"}
+                                        alt={item.name || "Product Image"}
+                                        width={80}
+                                        height={80}
+                                        className="object-contain w-[80px] h-[80px]"
                                         loading="lazy"
                                     />
+                                    <div className="flex-grow">
+                                        <p className="font-semibold">{item.name}</p>
+                                        <p className="text-sm text-gray-500">{item.category}</p>
+                                        <p className="text-green-700 font-bold">#{item.price}</p>
+                                    </div>
                                 </Link>
                             ))}
                         </ul>

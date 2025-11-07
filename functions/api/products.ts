@@ -1,12 +1,10 @@
- 
- // eslint-disable-next-line @typescript-eslint/no-explicit-any
- export const onRequestGet = async (context: any) => {
+export const onRequestGet = async (context: unknown) => {
   try {
     // Add timeout to prevent hanging requests
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
     
-    const response = await fetch("https://dummyjson.com/products", {
+    const response = await fetch("api/product", {
       signal: controller.signal
     });
     
