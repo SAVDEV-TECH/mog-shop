@@ -51,6 +51,7 @@ export default function SignUp() {
         setError(data.error || 'Something went wrong')
       }
     } catch (error) {
+      console.log(error)
       setError('Something went wrong')
     } finally {
       setIsLoading(false)

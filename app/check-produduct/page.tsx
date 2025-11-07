@@ -80,7 +80,7 @@ export default function CheckProducts() {
                   <div className="col-span-2">
                     <span className="font-medium">Images field (old):</span>{" "}
                     <code className="bg-yellow-100 px-2 py-1 rounded">
-                      {product.images ? product.images : "N/A"}
+                      {product.images ? JSON.stringify(product.images) : "N/A"}
                     </code>
                   </div>
                   <div className="col-span-2">
