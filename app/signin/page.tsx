@@ -1,8 +1,9 @@
-"use client";
-import React, { useState } from 'react';
+ "use client";
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
-/* Lightweight local SVG icon components to avoid depending on 'lucide-react' */
+/* Lightweight local SVG icon components */
 const Mail = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
     <path d="M3 8.5v7A2.5 2.5 0 0 0 5.5 18h13a2.5 2.5 0 0 0 2.5-2.5v-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -32,10 +33,18 @@ const X = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  updateProfile,
+  signInWithPopup,
+  GoogleAuthProvider,
+  getRedirectResult
+} from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
 export default function MogShopAuth() {
+  const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -47,34 +56,65 @@ export default function MogShopAuth() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Note: Replace these with actual Firebase auth functions
+  // Check for Google redirect result on component mount
+  useEffect(() => {
+    const checkRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          // User successfully signed in with Google
+          router.push('/'); // Change to your desired redirect path
+        }
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        setError(message || 'Google sign-in failed');
+      }
+    };
+    checkRedirectResult();
+  }, [router]);
+
   const handleEmailAuth = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Example Firebase implementation:
       if (isSignUp) {
+        // Sign up with email
         const userCredential = await createUserWithEmailAndPassword(
           auth, 
           formData.email, 
           formData.password
         );
+        
+        // Update user profile with name
         await updateProfile(userCredential.user, {
           displayName: `${formData.firstName} ${formData.lastName}`
         });
+        
+        router.push('/'); // Change to your desired redirect path
       } else {
+        // Sign in with email
         await signInWithEmailAndPassword(auth, formData.email, formData.password);
+        router.push('/'); // Change to your desired redirect path
       }
-      
-      alert(`${isSignUp ? 'Sign up' : 'Sign in'} successful!`);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      setError(message || 'An error occurred');
+      
+      // Make error messages more user-friendly
+      if (message.includes('email-already-in-use')) {
+        setError('This email is already registered. Please sign in instead.');
+      } else if (message.includes('invalid-email')) {
+        setError('Please enter a valid email address.');
+      } else if (message.includes('weak-password')) {
+        setError('Password should be at least 6 characters.');
+      } else if (message.includes('user-not-found') || message.includes('wrong-password')) {
+        setError('Invalid email or password.');
+      } else if (message.includes('invalid-credential')) {
+        setError('Invalid email or password.');
+      } else {
+        setError(message || 'An error occurred');
+      }
     } finally {
       setLoading(false);
     }
@@ -85,17 +125,29 @@ export default function MogShopAuth() {
     setLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const provider = new GoogleAuthProvider();
       
-      // Example Firebase implementation:
-      // const provider = new GoogleAuthProvider();
-      // await signInWithPopup(auth, provider);
+      // Add additional scopes if needed
+      provider.addScope('profile');
+      provider.addScope('email');
       
-      alert('Google sign in successful!');
+      // Sign in with popup
+      const result = await signInWithPopup(auth, provider);
+      
+      // Successful sign-in
+      console.log('Google sign-in successful:', result.user);
+      router.push('/dashboard'); // Change to your desired redirect path
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      setError(message || 'An error occurred');
+      
+      // Handle specific Google sign-in errors
+      if (message.includes('popup-closed-by-user')) {
+        setError('Sign-in cancelled. Please try again.');
+      } else if (message.includes('popup-blocked')) {
+        setError('Popup blocked. Please enable popups and try again.');
+      } else {
+        setError(message || 'Google sign-in failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -126,7 +178,6 @@ export default function MogShopAuth() {
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
           const img = e.currentTarget as HTMLImageElement;
           img.style.display = 'none';
-          // next sibling is the SVG wrapper (we keep the SVG next to the Image wrapper)
           const wrapper = img.closest('div');
           const next = wrapper?.nextElementSibling as HTMLElement | null;
           if (next) next.style.display = 'block';
@@ -135,14 +186,11 @@ export default function MogShopAuth() {
           </div>
 
           <svg className="w-32 h-32 hidden" viewBox="0 0 200 200" fill="none" aria-hidden>
-            {/* Shopping cart */}
             <path d="M60 100 L140 100 L150 140 L50 140 Z" fill="#1e5a8e" stroke="#1e5a8e" strokeWidth="4"/>
             <path d="M140 100 L150 70 L50 70 L60 100" fill="#1e5a8e"/>
             <circle cx="70" cy="150" r="8" fill="#1e5a8e"/>
             <circle cx="130" cy="150" r="8" fill="#1e5a8e"/>
-            {/* M letter */}
             <text x="100" y="125" fontSize="48" fontWeight="bold" fill="#f59e0b" textAnchor="middle">M</text>
-            {/* Items in cart */}
             <rect x="75" y="50" width="12" height="15" fill="#1e5a8e" rx="2"/>
             <circle cx="95" cy="52" r="6" fill="#1e5a8e"/>
             <ellipse cx="115" cy="52" rx="8" ry="6" fill="#1e5a8e"/>

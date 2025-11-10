@@ -1,75 +1,88 @@
-//  // auth.ts
-//  // auth.ts
-// import NextAuth from 'next-auth'
-// import CredentialsProvider from 'next-auth/providers/credentials'
-// import { PrismaAdapter } from '@next-auth/prisma-adapter'
-// import { prisma } from '@/lib/prisma'
-// import bcrypt from 'bcryptjs'
+ import { 
+  signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User
+} from 'firebase/auth';
+import { auth } from './firebase';
 
-// export const { handlers, auth, signIn, signOut } = NextAuth({
-//   adapter: PrismaAdapter(prisma),
-//   session: { strategy: 'jwt' },
-//   providers: [
-//     CredentialsProvider({
-//       name: 'credentials',
-//       credentials: {
-//         email: { label: 'Email', type: 'email' },
-//         password: { label: 'Password', type: 'password' }
-//       },
-//       async authorize(credentials) {
-//         if (!credentials?.email || !credentials?.password) return null
+// Google Sign-In with Popup
+export const signInWithGoogle = async () => {
+  const provider = new GoogleAuthProvider();
+  
+  try {
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
+  } catch (error: any) {
+    console.error('Google sign-in error:', error);
+    throw error;
+  }
+};
 
-//         try {
-//           const user = await prisma.user.findUnique({
-//             where: { email: credentials.email as string }
-//           })
+// Google Sign-In with Redirect (better for mobile)
+export const signInWithGoogleRedirect = async () => {
+  const provider = new GoogleAuthProvider();
+  
+  try {
+    await signInWithRedirect(auth, provider);
+  } catch (error: any) {
+    console.error('Google redirect error:', error);
+    throw error;
+  }
+};
 
-//           if (!user || !user.password) return null
+// Handle redirect result (call this on page load)
+export const handleGoogleRedirectResult = async () => {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result) {
+      return result.user;
+    }
+    return null;
+  } catch (error: any) {
+    console.error('Redirect result error:', error);
+    throw error;
+  }
+};
 
-//           const passwordMatch = await bcrypt.compare(
-//             credentials.password as string,
-//             user.password
-//           )
+// Email/Password Sign-In (your existing method)
+export const signInWithEmail = async (email: string, password: string) => {
+  try {
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    return result.user;
+  } catch (error: any) {
+    console.error('Email sign-in error:', error);
+    throw error;
+  }
+};
 
-//           if (!passwordMatch) return null
+// Email/Password Sign-Up
+export const signUpWithEmail = async (email: string, password: string) => {
+  try {
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    return result.user;
+  } catch (error: any) {
+    console.error('Email sign-up error:', error);
+    throw error;
+  }
+};
 
-//           return {
-//             id: user.id,
-//             email: user.email,
-//             name: user.name,
-//           }
-//         } catch (error) {
-//           console.error('Authorization error:', error)
-//           return null
-//         }
-//       }
-//     })
-//   ],
-//   callbacks: {
-//     authorized({ auth, request: { nextUrl } }) {
-//       const isLoggedIn = !!auth?.user
-//       const isOnDashboard = nextUrl.pathname.startsWith('/dashboard')
-      
-//       if (isOnDashboard && !isLoggedIn) {
-//            const redirectUrl = new URL('/login', nextUrl.origin);
-//            return Response.redirect(redirectUrl);
-//       }
-//       return true
-//     },
-//     async jwt({ token, user }: any) {
-//       if (user) {
-//         (token as any)['id'] = (user as any)['id']
-//       }
-//       return token
-//     },
-//     async session({ session, token }: any) {
-//       if (token && session.user) {
-//         (session.user as any)['id'] = (token as any)['id'] as string
-//       }
-//       return session
-//     }
-//   },
-//   pages: {
-//     signIn: '/signin',
-//   }
-// })
+// Sign Out
+export const logOut = async () => {
+  try {
+    await signOut(auth);
+  } catch (error: any) {
+    console.error('Sign out error:', error);
+    throw error;
+  }
+};
+
+// Auth State Listener
+export const onAuthStateChange = (callback: (user: User | null) => void) => {
+  return onAuthStateChanged(auth, callback);
+};
