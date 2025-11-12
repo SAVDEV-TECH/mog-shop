@@ -1,5 +1,4 @@
- 
-'use client'
+ 'use client'
 
 import Link from 'next/link'
 import Image from 'next/image'
@@ -7,8 +6,12 @@ import React, { useState } from 'react'
 import { FiSearch } from "react-icons/fi"
 import Search from '@/app/Component/Search/searchitem'
 import { useCart } from '../ContextCart/page'
+import { useAuth } from '@/app/ContextAuth/Authcontext'
+import { signOut } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
 import { GiHamburgerMenu } from "react-icons/gi"
 import { LiaTimesSolid } from "react-icons/lia"
+import { useRouter } from 'next/navigation'
 
 const item_navbar = [
   { name: 'home', path: '/new-features' },
@@ -20,7 +23,10 @@ const item_navbar = [
 function Navbar() {
   const [showslidesearch, setshowslidesearch] = useState(false)
   const [showNavbar, setshowNavbar] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
   const { state: { items } } = useCart()
+  const { user } = useAuth()
+  const router = useRouter()
   
   const showslidenav = () => {
     setshowNavbar(!showNavbar)
@@ -28,6 +34,16 @@ function Navbar() {
 
   const closeNav = () => {
     setshowNavbar(false)
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth)
+      setShowUserMenu(false)
+      router.push('/')
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
   }
    
   return (
@@ -129,14 +145,83 @@ function Navbar() {
             )}
           </Link>
 
-          {/* Sign-in - Hidden on smallest screens */}
-          <Link 
-            href="/signin" 
-            className="hidden sm:flex px-3 py-2 rounded-full bg-black text-white text-sm hover:opacity-90 transition-opacity whitespace-nowrap" 
-            title="Sign in"
-          >
-            Sign in
-          </Link>
+          {/* User Profile or Sign-in */}
+          {user ? (
+            <div className="relative hidden sm:block">
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="flex items-center gap-2 hover:bg-[#f5f5f5] rounded-full p-1 transition-colors"
+                aria-label="User menu"
+              >
+                {user.photoURL ? (
+                  <Image
+                    src={user.photoURL}
+                    alt={user.displayName || 'User'}
+                    width={36}
+                    height={36}
+                    className="rounded-full border-2 border-gray-200"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                    {user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </button>
+
+              {/* User Dropdown Menu */}
+              {showUserMenu && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setShowUserMenu(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
+                    <div className="px-4 py-3 border-b border-gray-200">
+                      <p className="text-sm font-semibold text-gray-900">{user.displayName || 'User'}</p>
+                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    </div>
+                    <Link
+                      href="/order"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      📦 My Orders
+                    </Link>
+                    <Link
+                      href="/profile"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      👤 Profile
+                    </Link>
+                    <Link
+                      href="/Component/Demosearch"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      ❤️ Favourites
+                    </Link>
+                    <hr className="my-2" />
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      🚪 Sign Out
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <Link 
+              href="/signin" 
+              className="hidden sm:flex px-3 py-2 rounded-full bg-black text-white text-sm hover:opacity-90 transition-opacity whitespace-nowrap" 
+              title="Sign in"
+            >
+              Sign in
+            </Link>
+          )}
 
           {/* Mobile Menu Toggle */}
           <button 
@@ -180,8 +265,58 @@ function Navbar() {
           </button>
         </div>
 
+        {/* User Profile Section (Mobile) */}
+        {user && (
+          <div className="px-4 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center gap-3">
+              {user.photoURL ? (
+                <Image
+                  src={user.photoURL}
+                  alt={user.displayName || 'User'}
+                  width={48}
+                  height={48}
+                  className="rounded-full border-2 border-gray-200"
+                  unoptimized
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                  {user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 truncate">
+                  {user.displayName || 'User'}
+                </p>
+                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Mobile Nav Links */}
         <ul className='flex flex-col p-4'> 
+          {user && (
+            <>
+              <li className="border-b border-gray-100">
+                <Link 
+                  href="/order" 
+                  className='block px-4 py-4 text-base font-medium hover:bg-gray-50 rounded-lg transition-colors'
+                  onClick={closeNav}
+                >
+                  📦 My Orders
+                </Link>
+              </li>
+              <li className="border-b border-gray-100">
+                <Link 
+                  href="/profile" 
+                  className='block px-4 py-4 text-base font-medium hover:bg-gray-50 rounded-lg transition-colors'
+                  onClick={closeNav}
+                >
+                  👤 Profile
+                </Link>
+              </li>
+            </>
+          )}
           {item_navbar.map((item, id) =>
             item.path ? (
               <li key={id} className="border-b border-gray-100">
@@ -214,13 +349,25 @@ function Navbar() {
             <span className="text-base font-medium">Favourites</span>
           </Link>
           
-          <Link 
-            href="/signin" 
-            className="block w-full px-4 py-3 text-center rounded-full bg-black text-white font-medium hover:opacity-90 transition-opacity"
-            onClick={closeNav}
-          >
-            Sign in
-          </Link>
+          {user ? (
+            <button 
+              onClick={() => {
+                handleSignOut()
+                closeNav()
+              }}
+              className="block w-full px-4 py-3 text-center rounded-full bg-red-600 text-white font-medium hover:bg-red-700 transition-colors"
+            >
+              Sign Out
+            </button>
+          ) : (
+            <Link 
+              href="/signin" 
+              className="block w-full px-4 py-3 text-center rounded-full bg-black text-white font-medium hover:opacity-90 transition-opacity"
+              onClick={closeNav}
+            >
+              Sign in
+            </Link>
+          )}
         </div>
       </div>
 

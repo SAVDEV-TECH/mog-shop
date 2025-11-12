@@ -63,7 +63,12 @@ export default function MogShopAuth() {
         const result = await getRedirectResult(auth);
         if (result) {
           // User successfully signed in with Google
-          router.push('/'); // Change to your desired redirect path
+          // Get the redirect URL from sessionStorage
+const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || '/';
+// Clear the stored redirect URL
+sessionStorage.removeItem('redirectAfterLogin');
+// Redirect to the intended page
+ router.push(redirectUrl);    // Change to your desired redirect path
         }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
@@ -92,11 +97,17 @@ export default function MogShopAuth() {
           displayName: `${formData.firstName} ${formData.lastName}`
         });
         
-        router.push('/'); // Change to your desired redirect path
+        // Get the redirect URL from sessionStorage
+const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || '/';
+sessionStorage.removeItem('redirectAfterLogin');
+router.push(redirectUrl); // Change to your desired redirect path
       } else {
         // Sign in with email
         await signInWithEmailAndPassword(auth, formData.email, formData.password);
-        router.push('/'); // Change to your desired redirect path
+         // Get the redirect URL from sessionStorage
+const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || '/';
+sessionStorage.removeItem('redirectAfterLogin');
+router.push(redirectUrl);; // Change to your desired redirect path
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
@@ -136,7 +147,10 @@ export default function MogShopAuth() {
       
       // Successful sign-in
       console.log('Google sign-in successful:', result.user);
-      router.push('/dashboard'); // Change to your desired redirect path
+      // Get the redirect URL from sessionStorage
+const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || '/';
+sessionStorage.removeItem('redirectAfterLogin');
+router.push(redirectUrl); // Change to your desired redirect path
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       

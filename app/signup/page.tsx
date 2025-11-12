@@ -42,7 +42,7 @@ export default function SignUp() {
         })
 
         if (result?.ok) {
-          router.push('/dashboard')
+          router.push('/')
         } else {
           setError('Sign in failed after registration')
         }
