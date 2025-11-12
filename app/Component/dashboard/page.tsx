@@ -14,8 +14,8 @@ import {
   onSnapshot,
   serverTimestamp
 } from "firebase/firestore";
-import { db, storage } from "@/lib/firebase";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { db } from "@/lib/firebase";
+// import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { isAdmin } from "@/lib/adminAuth";
 import { 
   LayoutDashboard, 
@@ -352,6 +352,7 @@ export default function DashboardPage() {
               setTimeout(() => setUploadProgress(0), 500);
               resolve(response.secure_url);
             } catch (error) {
+              console.log(error)
               reject(new Error('Failed to parse upload response'));
             }
           } else {
