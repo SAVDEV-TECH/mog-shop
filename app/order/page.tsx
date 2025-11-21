@@ -95,7 +95,7 @@ export default function OrderPage() {
         <p className="text-gray-600 mb-6">Add some items to your cart before placing an order.</p>
         <button
           onClick={() => router.push("/")}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg"
+          className="bg-mog text-white px-6 py-2 rounded-lg"
         >
           Continue Shopping
         </button>
@@ -167,7 +167,7 @@ export default function OrderPage() {
                 name="fullName"
                 value={customerInfo.fullName}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mog"
                 placeholder="John Doe"
               />
             </div>
@@ -181,7 +181,7 @@ export default function OrderPage() {
                 name="email"
                 value={customerInfo.email}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mog"
                 placeholder="john@example.com"
                 
               />
@@ -197,7 +197,7 @@ export default function OrderPage() {
                 name="phone"
                 value={customerInfo.phone}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mog"
                 placeholder="0801234567"
               />
             </div>
@@ -210,7 +210,7 @@ export default function OrderPage() {
                 name="address"
                 value={customerInfo.address}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mog"
                 rows={3}
                 placeholder="Enter your full delivery address"
               />
@@ -224,7 +224,7 @@ export default function OrderPage() {
                   name="city"
                   value={customerInfo.city}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mog"
                   placeholder="Port Harcourt"
                 />
               </div>
@@ -236,7 +236,7 @@ export default function OrderPage() {
                   name="state"
                   value={customerInfo.state}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mog"
                   placeholder="Rivers"
                 />
               </div>
@@ -252,7 +252,7 @@ export default function OrderPage() {
             </button>
             <button
               onClick={handleProceedToPayment}
-              className="flex-1 bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+              className="flex-1 bg-mog text-white px-4 py-3 rounded-lg font-semibold hover:opacity-95 transition"
             >
               Proceed to Payment
             </button>

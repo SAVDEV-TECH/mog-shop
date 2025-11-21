@@ -72,7 +72,7 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
 
           <button 
             onClick={handleAddToCart} 
-            className="bg-black text-white rounded-md px-6 py-2 mt-4 w-fit hover:bg-gray-800"
+            className="bg-mogorange text-white rounded-md px-6 py-2 mt-4 w-fit hover:opacity-95"
           >
             Add to Cart
           </button>

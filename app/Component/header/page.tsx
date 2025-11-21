@@ -9,18 +9,19 @@ import { useCart } from '../ContextCart/page'
 import { useAuth } from '@/app/ContextAuth/Authcontext'
 import { signOut } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
+import ThemeToggle from '@/app/Component/ThemeToggle/ThemeToggle'
 import { GiHamburgerMenu } from "react-icons/gi"
 import { LiaTimesSolid } from "react-icons/lia"
 import { useRouter } from 'next/navigation'
 
 const item_navbar = [
-  { name: 'home', path: '/new-features' },
-  { name: 'product', path: '/men' },
-  { name: 'service', path: '/women' },
-  { name: 'signup', path: '/kids' }
+  { name: 'home', path: '/' },
+  { name: 'product', path: '/' },
+  
+  { name: 'signup', path: '/sigin' }
 ]
 
-function Navbar() {
+export default function Navbar() {
   const [showslidesearch, setshowslidesearch] = useState(false)
   const [showNavbar, setshowNavbar] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -60,7 +61,7 @@ function Navbar() {
               className="h-10 sm:h-14 md:h-16 w-auto"
               unoptimized
             />
-            <h1 className='text-base sm:text-lg md:text-xl font-bold'>
+            <h1 className='text-base sm:text-lg md:text-xl font-bold text-mog'>
               Mogshop
             </h1>
           </Link>
@@ -114,17 +115,17 @@ function Navbar() {
           </button>
 
           {/* Favourites */}
-          <Link 
+          {/* <Link 
             className='hidden sm:flex hover:bg-[#f5f5f5] rounded-full p-2 transition-colors' 
             href="/Component/Demosearch" 
             title="Favourites"
             aria-label="Favourites"
-          >
+          > 
             <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" role="img" width="24px" height="24px" fill="none">
               <path stroke="currentColor" strokeWidth="1.5" d="M16.794 3.75c1.324 0 2.568.516 3.504 1.451a4.96 4.96 0 010 7.008L12 20.508l-8.299-8.299a4.96 4.96 0 010-7.007A4.923 4.923 0 017.205 3.75c1.324 0 2.568.516 3.504 1.451l.76.76.531.531.53-.531.76-.76a4.926 4.926 0 013.504-1.451"></path>
             </svg>
-          </Link>
-
+          </Link>*/}
+      <ThemeToggle/>
           {/* Cart */}
           <Link 
             className="hover:bg-[#f5f5f5] rounded-full p-2 flex items-center transition-colors relative" 
@@ -377,4 +378,4 @@ function Navbar() {
   )
 }
 
-export default Navbar
+ 

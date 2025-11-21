@@ -333,7 +333,7 @@ router.push(redirectUrl); // Change to your desired redirect path
           <button
             onClick={handleEmailAuth}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-[1.02] disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed disabled:transform-none shadow-md"
+            className="w-full bg-mog text-white py-3 rounded-lg font-semibold hover:bg-mog-600 transition-all transform hover:scale-[1.02] disabled:opacity-50 shadow-md"
           >
             {loading ? 'PROCESSING...' : (isSignUp ? 'CREATE ACCOUNT' : 'SIGN IN')}
           </button>

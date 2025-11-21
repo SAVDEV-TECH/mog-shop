@@ -5,6 +5,10 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Brand colors */
+  --mog-blue: #0f4c81;
+  --mog-orange: #f59e0b;
+  --mog-white: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -12,6 +16,18 @@
     --background: #0a0a0a;
     --foreground: #ededed;
   }
+}
+
+/* Support toggling dark mode via the `dark` class on <html> (Tailwind's class strategy) */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+/* Optional: explicit light class to force light theme */
+.light {
+  --background: #ffffff;
+  --foreground: #171717;
 }
  
 
@@ -21,3 +37,12 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Brand utility classes for convenience */
+.bg-mog { background-color: var(--mog-blue); }
+.text-mog { color: var(--mog-blue); }
+.bg-mogorange { background-color: var(--mog-orange); }
+.text-mogorange { color: var(--mog-orange); }
+.text-white-mog { color: var(--mog-white); }
+.btn-mog { @apply bg-mog text-white px-4 py-2 rounded-lg shadow; }
+.btn-mog-outline { @apply border border-mog text-mog px-4 py-2 rounded-lg; }

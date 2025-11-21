@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import ProductGarage from "../ProductGarage/productGarage";
 import Image from "next/image";
 import { useCart } from "../ContextCart/page";
+import { useRouter } from "next/navigation";
 
 const store = [
   { text: "Beef" },
@@ -33,6 +34,7 @@ function Prodpage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   
   const { dispatch } = useCart();
+  const router = useRouter();
   
   const [categories, setCategories] = useState<string[]>([]);
 
@@ -122,6 +124,31 @@ function Prodpage() {
     <div>
       <ProductGarage setSlidetoleft={setSlidetoleft} slidetoleft={slidetoleft} />
 
+      {/* Back Button - Sticky at top */}
+      <div className="sticky top-0 z-20 bg-white shadow-sm">
+        <div className="w-[92%] mx-auto py-3">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+          >
+            <svg 
+              className="w-5 h-5" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M15 19l-7-7 7-7" 
+              />
+            </svg>
+            <span className="text-sm md:text-base">Back</span>
+          </button>
+        </div>
+      </div>
+
       <div className="w-[92%] flex flex-col relative p-3 md:flex-row mx-auto gap-2 justify-center">
         {/* Sidebar for categories (mobile or desktop) */}
         {(isMobile || slidetoleft) && (
@@ -173,7 +200,7 @@ function Prodpage() {
         {/* Products Grid with Search Bar */}
         <div className="w-[100%]">
           {/* Search Bar */}
-          <div className="mb-6 sticky top-0 bg-white z-10 py-3">
+          <div className="mb-6 sticky top-16 bg-white z-10 py-3">
             <div className="relative">
               <input
                 type="text"
@@ -199,8 +226,10 @@ function Prodpage() {
                 <button
                   onClick={() => setSearchQuery("")}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  title="Clear search"
+                  aria-label="Clear search"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -268,13 +297,13 @@ function Prodpage() {
                       <div className="flex flex-col gap-2 mt-3">
                         <Link
                           href={`/ProductDetailpage/${product.id}`}
-                          className="w-full bg-blue-600 text-white text-center py-2 px-3 rounded text-xs md:text-sm hover:bg-blue-700 transition"
+                          className="w-full bg-mog text-white text-center py-2 px-3 rounded text-xs md:text-sm hover:opacity-95 transition"
                         >
                           View Product
                         </Link>
                         <button
                           onClick={(e) => handleAddToCart(product, e)}
-                          className="w-full bg-black text-white py-2 px-3 rounded text-xs md:text-sm hover:bg-gray-800 transition"
+                          className="w-full bg-mogorange text-white py-2 px-3 rounded text-xs md:text-sm hover:opacity-95 transition"
                         >
                           Add to Cart
                         </button>

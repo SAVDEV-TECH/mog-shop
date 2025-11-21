@@ -104,7 +104,7 @@ export default function UploadPage() {
       <button
         onClick={handleUpload}
         disabled={loading}
-        className="bg-blue-500 text-white px-4 py-2 rounded"
+        className="bg-mog text-white px-4 py-2 rounded"
       >
         {loading ? "Uploading..." : "Upload Product"}
       </button>

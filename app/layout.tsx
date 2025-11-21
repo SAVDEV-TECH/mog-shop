@@ -1,14 +1,10 @@
-import type { Metadata } from "next";
+ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-// import { SessionProvider } from 'next-auth/react'
-// import { auth } from '@/lib/auth'
 import Header from '@/app/Component/header/page'
-import Shop from "./Component/header/shoptext/page"
 import { CartProvider } from "@/app/Component/ContextCart/page";
-// import { auth } from '@/lib/auth'
-//  import { AuthContextProvider } from "./context/authcontext"; // added
 import { AuthProvider } from "@/app/ContextAuth/Authcontext";
+import { ThemeProvider } from '@/app/Component/ThemeProvider/ThemeProvider'
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -26,29 +22,26 @@ export const metadata: Metadata = {
   description: "Your one-stop shop for all things awesome!",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-    // const session = await auth()
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* <Provider session={session}> */}
-            <AuthProvider>
-        <CartProvider> 
-        <Header></Header>
-            <Shop></Shop>
-
-            {children}
-          </CartProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <CartProvider> 
+              <Header />
+              {children}
+            </CartProvider>
           </AuthProvider>
-        {/* </Provider> */}
+        </ThemeProvider>
       </body>
     </html>
   );
 }
-
+ 

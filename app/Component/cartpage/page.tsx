@@ -2,7 +2,7 @@
 import { useCart } from "@/app/Component/ContextCart/page";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
- 
+import Backbutton from '@/app/Component/Backbutton/page';
 
 export default function CartPage() {
   const { state, dispatch, total } = useCart(); // now includes total
@@ -10,6 +10,7 @@ export default function CartPage() {
   return (
     <div className="max-w-3xl mx-auto p-4">
       <h2 className="text-2xl font-bold mb-4">🛒 MogShop Cart</h2>
+      <Backbutton />
 
       {state.items.length === 0 ? (
         <p className="text-gray-500">Your cart is empty.</p>
@@ -78,14 +79,14 @@ export default function CartPage() {
           <div className="flex justify-between">
             <button
               onClick={() => dispatch({ type: "CLEAR_CART" })}
-              className="bg-red-500 text-white px-4 py-2 rounded"
+              className="bg-mogorange text-white px-4 py-2 rounded"
             >
               Clear Cart
             </button>
 
             <button
               onClick={() => router.push("/order")}
-              className="bg-green-600 text-white px-4 py-2 rounded"
+              className="bg-mog text-white px-4 py-2 rounded"
             >
               Checkout
             </button>

@@ -638,7 +638,7 @@ export default function DashboardPage() {
                         <td className="py-3 px-4 font-semibold">₦{order.total.toLocaleString()}</td>
                         <td className="py-3 px-4">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(order.status)}`}>
-                            {order.status}
+                      className="bg-mog text-white px-6 py-2 rounded-lg hover:opacity-95 transition flex items-center space-x-2"
                           </span>
                         </td>
                         <td className="py-3 px-4 text-gray-600">{order.date}</td>

@@ -1,10 +1,10 @@
-"use client";
+ "use client";
 import { useCart } from "@/app/Component/ContextCart/page";
 import { useAuth } from "@/app/ContextAuth/Authcontext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-// import { CreditCard, Truck } from "lucide-react";
 import { db } from "@/lib/firebase";
+import Backbutton from '@/app/Component/Backbutton/page';
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 interface PaystackSetupOptions {
@@ -40,6 +40,8 @@ interface CustomerInfo {
   address?: string;
   phone?: string;
   fullName?: string;
+  city?: string;
+  state?: string;
 }
 
 export default function PaymentPage() {
@@ -54,22 +56,18 @@ export default function PaymentPage() {
   const grandTotal = total + deliveryFee;
 
   useEffect(() => {
-    // Wait for auth to finish loading
     if (authLoading) return;
 
-    // Check if user is authenticated
     if (!user) {
       sessionStorage.setItem("redirectAfterLogin", "/payment");
       router.push("/signin");
       return;
     }
 
-    // Get customer info from sessionStorage
     const storedInfo = sessionStorage.getItem("customerInfo");
     if (storedInfo) {
       setCustomerInfo(JSON.parse(storedInfo));
     } else {
-      // If no customer info, redirect back to order page
       router.push("/order");
     }
   }, [user, authLoading, router]);
@@ -100,44 +98,57 @@ export default function PaymentPage() {
       const docRef = await addDoc(collection(db, "orders"), orderData);
       console.log("Order saved with ID: ", docRef.id);
 
-      // Send email notification (you can use a cloud function for this)
+      // Send email notification
       await sendOrderNotification(docRef.id, orderData);
 
       return docRef.id;
     } catch (error) {
-      console.log("Error saving order: ", error);
+      console.error("Error saving order: ", error);
       throw error;
     }
   };
 
-  // Send email notification (This should ideally be done via a backend/cloud function)
-  const sendOrderNotification = async (
-    orderId: string,
-    orderData: { userEmail?: string | null; total?: number }
-  ) => {
+  // Send email notification via API
+  const sendOrderNotification = async (orderId: string, orderData: any) => {
     try {
-      // You would typically call a cloud function or API endpoint here
-      // For now, we'll just log it
-      console.log("Sending order notification email...", {
-        to: orderData.userEmail,
-        orderId: orderId,
-        total: orderData.total,
+      const response = await fetch('/api/send-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderDetails: {
+            id: orderId,
+            total: orderData.total,
+            customerName: customerInfo?.fullName,
+            customerEmail: customerInfo?.email || user?.email,
+            items: orderData.items,
+            deliveryAddress: customerInfo?.address,
+            phone: customerInfo?.phone,
+            paymentMethod: orderData.paymentMethod,
+            paymentReference: orderData.paymentReference,
+          },
+          userEmail: customerInfo?.email || user?.email,
+        }),
       });
 
-      // Example: Call your cloud function
-      // await fetch('/api/send-order-email', {
-      //   method: 'POST',
-      //   body: JSON.stringify({ orderId, orderData })
-      // });
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('✅ Email notifications sent successfully!');
+      } else {
+        console.log('❌ Failed to send email notifications:', result.error);
+        // Don't throw error - order is still saved, just email failed
+      }
     } catch (error) {
-      console.error("Error sending notification: ", error);
+      console.log("Error sending notification: ", error);
+      // Don't throw error - order is still saved, just email failed
     }
   };
 
   const handlePaystackPayment = async () => {
     setLoading(true);
 
-    // Check if Paystack script is loaded
     if (typeof window.PaystackPop === "undefined") {
       alert("Paystack is not loaded. Please refresh the page and try again.");
       setLoading(false);
@@ -145,25 +156,21 @@ export default function PaymentPage() {
     }
 
     const handler = window.PaystackPop.setup({
-      key: "pk_test_c96cccb18b1d6540ead612acc09289a21aaee16f", // Replace with your Paystack public key
+      key: "pk_test_c96cccb18b1d6540ead612acc09289a21aaee16f",
       email: customerInfo!.email || '',
-      amount: grandTotal * 100, // Paystack expects amount in kobo
+      amount: grandTotal * 100,
       currency: "NGN",
       ref: "ORD_" + Math.floor(Math.random() * 1000000000) + Date.now(),
       callback: async function (response: PaystackResponse) {
         try {
-          // Save order to Firebase
           const orderId = await saveOrderToFirebase("paystack", response.reference);
 
           alert(
             `✅ Payment successful!\n\nOrder ID: ${orderId}\nReference: ${response.reference}\n\nYou will receive a confirmation email shortly.`
           );
 
-          // Clear cart and customer info
           dispatch({ type: "CLEAR_CART" });
           sessionStorage.removeItem("customerInfo");
-
-          // Redirect to success page or home
           router.push("/");
         } catch (error) {
           alert("Payment successful but there was an error saving your order. Please contact support.");
@@ -189,7 +196,6 @@ export default function PaymentPage() {
     if (confirmOrder) {
       setLoading(true);
       try {
-        // Save order to Firebase
         const orderId = await saveOrderToFirebase("payment-on-delivery");
 
         alert(
@@ -201,11 +207,8 @@ export default function PaymentPage() {
             `You will receive a confirmation email shortly.`
         );
 
-        // Clear cart and customer info
         dispatch({ type: "CLEAR_CART" });
         sessionStorage.removeItem("customerInfo");
-
-        // Redirect to home
         router.push("/");
       } catch (error) {
         alert("There was an error placing your order. Please try again.");
@@ -229,7 +232,6 @@ export default function PaymentPage() {
     }
   };
 
-  // Show loading state while checking auth
   if (authLoading) {
     return (
       <div className="max-w-3xl mx-auto p-4 text-center mt-20">
@@ -239,7 +241,6 @@ export default function PaymentPage() {
     );
   }
 
-  // Don't render anything if not authenticated (will redirect)
   if (!user) {
     return null;
   }
@@ -256,8 +257,8 @@ export default function PaymentPage() {
   return (
     <div className="max-w-3xl mx-auto p-4">
       <h2 className="text-3xl font-bold mb-6">💳 Payment</h2>
-
-      {/* Customer & Order Summary */}
+      <Backbutton />
+      
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h3 className="text-lg font-semibold mb-3">Delivery Information</h3>
         <div className="grid grid-cols-2 gap-4 text-sm">
@@ -280,7 +281,6 @@ export default function PaymentPage() {
         </div>
       </div>
 
-      {/* Order Items */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h3 className="text-lg font-semibold mb-3">Order Items ({state.items.length})</h3>
         <div className="space-y-2">
@@ -312,12 +312,10 @@ export default function PaymentPage() {
         </div>
       </div>
 
-      {/* Payment Methods */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h3 className="text-lg font-semibold mb-4">Select Payment Method</h3>
 
         <div className="space-y-3">
-          {/* Paystack Option */}
           <div
             onClick={() => setPaymentMethod("paystack")}
             className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition ${
@@ -335,19 +333,17 @@ export default function PaymentPage() {
                 <div className="w-3 h-3 rounded-full bg-blue-500"></div>
               )}
             </div>
-            {/* <CreditCard className="mr-3 text-blue-600" size={24} /> */}
             <div>
               <div className="font-medium">Pay with Paystack</div>
               <div className="text-sm text-gray-600">Card, Bank Transfer, USSD</div>
             </div>
           </div>
 
-          {/* Payment on Delivery Option */}
           <div
             onClick={() => setPaymentMethod("pod")}
             className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition ${
               paymentMethod === "pod"
-                ? "border-blue-500 bg-blue-50"
+                ? "border-mog bg-mog-50"
                 : "border-gray-200 hover:border-gray-300"
             }`}
           >
@@ -357,10 +353,9 @@ export default function PaymentPage() {
               }`}
             >
               {paymentMethod === "pod" && (
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                <div className="w-3 h-3 rounded-full bg-mog"></div>
               )}
             </div>
-            {/* <Truck className="mr-3 text-green-600" size={24} /> */}
             <div>
               <div className="font-medium">Payment on Delivery</div>
               <div className="text-sm text-gray-600">Pay with cash when you receive your order</div>
@@ -369,7 +364,6 @@ export default function PaymentPage() {
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex space-x-3">
         <button
           onClick={() => router.back()}
@@ -381,7 +375,7 @@ export default function PaymentPage() {
         <button
           onClick={handleCompleteOrder}
           disabled={loading}
-          className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400"
+          className="flex-1 bg-mog text-white px-4 py-3 rounded-lg font-semibold hover:opacity-95 transition disabled:bg-gray-400"
         >
           {loading ? "Processing..." : `Complete Order - ₦${grandTotal.toLocaleString()}`}
         </button>
