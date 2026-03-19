@@ -12,23 +12,19 @@ interface product {
     id: Key | null | undefined;
 }
 
-
- 
 export interface ProductContextProps {
-    // Add existing properties here
     sortedproduct: {
       rating: ReactNode;
       beauty: ReactNode;
       images: (images: string[]) => React.ReactNode;
       id: Key | null | undefined; title: string; price: number 
-}[]; // Adjust the type as per your data structure
+    }[];
     setsortedproduct: React.Dispatch<React.SetStateAction<product[]>>;
-  }
-   
+}
 
 const productContext=createContext<ProductContextProps  | undefined>(undefined)
 
-export  const ProductProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+export const ProductProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
     const [sortedproduct,setsortedproduct]=useState<product[]>([])
     return (
         <productContext.Provider value={{sortedproduct,setsortedproduct}}>
@@ -43,4 +39,4 @@ export const useProductContext = () => {
       throw new Error("useProductContext must be used within a ProductProvider");
     }
     return context;
-  };
+};

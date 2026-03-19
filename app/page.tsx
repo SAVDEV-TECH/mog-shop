@@ -1,6 +1,6 @@
  import React from 'react'
- import Prodpage from './Component/Prodpage/page';
-import { ProductProvider } from "./Contextsortproduct/productSort"
+ import ProdPage from '@/components/ProdPage';
+import { ProductProvider } from "@/context/ProductSortContext"
  
 
   function Home() {
@@ -9,11 +9,10 @@ import { ProductProvider } from "./Contextsortproduct/productSort"
    return (
     <ProductProvider> 
      <div>
-       <Prodpage></Prodpage>
+       <ProdPage></ProdPage>
      </div>
      </ProductProvider>
    )
  }
  
  export default Home
- 

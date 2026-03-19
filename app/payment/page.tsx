@@ -1,11 +1,11 @@
  "use client";
-import { useCart } from "@/app/Component/ContextCart/page";
-import { useAuth } from "@/app/ContextAuth/Authcontext";
+import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { db } from "@/lib/firebase";
-import Backbutton from '@/app/Component/Backbutton/page';
+import BackButton from '@/components/BackButton';
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 interface PaystackSetupOptions {
@@ -263,7 +263,7 @@ export default function PaymentPage() {
   return (
     <div className="max-w-3xl mx-auto p-4 text-gray-900 dark:text-gray-100">
       <h2 className="text-3xl font-bold mb-6 dark:text-gray-100">💳 Payment</h2>
-      <Backbutton />
+      <BackButton />
       
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md dark:shadow-black border border-transparent dark:border-gray-800 p-6 mb-6">
         <h3 className="text-lg font-semibold mb-3 dark:text-gray-100">Delivery Information</h3>

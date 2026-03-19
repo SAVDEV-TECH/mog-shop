@@ -2,11 +2,11 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useWishlist, WishlistItem } from "@/app/Component/ContextWishlist/page";
-import { useCart } from "@/app/Component/ContextCart/page";
+import { useWishlist, WishlistItem } from "@/context/WishlistContext";
+import { useCart } from "@/context/CartContext";
 import toast from "react-hot-toast";
 import { Trash2, ShoppingCart, HeartOff } from "lucide-react";
-import Backbutton from "@/app/Component/Backbutton/page";
+import BackButton from "@/components/BackButton";
 
 export default function WishlistPage() {
   const { state, dispatch: wishlistDispatch } = useWishlist();
@@ -38,7 +38,7 @@ export default function WishlistPage() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
             ❤️ My Wishlist
           </h1>
-          <Backbutton />
+          <BackButton />
         </div>
 
         {state.items.length === 0 ? (

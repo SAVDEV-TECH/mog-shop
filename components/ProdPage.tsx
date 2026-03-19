@@ -1,10 +1,10 @@
 "use client";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import ProductGarage from "../ProductGarage/productGarage";
+import ProductGarage from "./ProductGarage";
 import Image from "next/image";
-import { useCart } from "../ContextCart/page";
-import { useWishlist } from "../ContextWishlist/page";
+import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Heart } from "lucide-react";
@@ -27,7 +27,7 @@ interface ProductsParam {
   category?: string;
 }
 
-function Prodpage() {
+function ProdPage() {
   const [slidetoleft, setSlidetoleft] = useState(true);
   const [isMobile, setisMobile] = useState(false);
   const [products, setProducts] = useState<ProductsParam[]>([]);
@@ -359,4 +359,4 @@ function Prodpage() {
   );
 }
 
-export default Prodpage;
+export default ProdPage;

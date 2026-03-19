@@ -1,13 +1,13 @@
  import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import Header from '@/app/Component/header/page'
-import { CartProvider } from "@/app/Component/ContextCart/page";
-import { WishlistProvider } from "@/app/Component/ContextWishlist/page";
-import { AuthProvider } from "@/app/ContextAuth/Authcontext";
-import { ThemeProvider } from '@/app/Component/ThemeProvider/ThemeProvider'
+import Header from '@/components/Header'
+import { CartProvider } from "@/context/CartContext";
+import { WishlistProvider } from "@/context/WishlistContext";
+import { AuthProvider } from "@/context/AuthContext";
+import { ThemeProvider } from '@/components/ThemeProvider'
 import { Toaster } from "react-hot-toast";
-import PageWrapper from "@/app/Component/PageWrapper/page";
+import PageWrapper from "@/components/PageWrapper";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",

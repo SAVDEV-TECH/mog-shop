@@ -44,12 +44,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
 
-  // Always provide the context to children.
-  // Rendering children outside the provider (before mounted) caused
-  // `useTheme` to throw because there was no provider in the tree.
-  // We keep the mount state to initialize theme from storage, but
-  // we still render the provider so consumers can safely call `useTheme`.
-
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}

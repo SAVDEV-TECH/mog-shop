@@ -1,4 +1,4 @@
- import ProductDetailpage from '@/app/Component/ProductpageWraper/ProductpageWraper'
+ import ProductDetailpage from '@/components/ProductPageWrapper'
 import { notFound } from 'next/navigation'
 import { getAllProducts, getProductById } from '@/lib/products'
 

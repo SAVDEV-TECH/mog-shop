@@ -1,4 +1,4 @@
- "use client";
+"use client";
 import React, { createContext, useContext, useReducer, useMemo, useEffect } from "react";
 
 // ====== Type definitions ======
@@ -19,7 +19,6 @@ type CartAction =
   | { type: "REMOVE_ITEM"; id: string }
   | { type: "INCREASE_QUANTITY"; id: string }
   | { type: "DECREASE_QUANTITY"; id: string }
-  | { type: "DECREASE_QUANTITY", id: string }
   | { type: "CLEAR_CART" }
   | { type: "SET_CART"; items: CartItem[] };
 
@@ -148,7 +147,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 export const useCart = () => {
   const context = useContext(CartContext);
   if (!context) {
-    throw new Error("useCart must be used within a CartProvider");
+    throw new Error("useCart must be used within an CartProvider");
   }
   return context;
 };

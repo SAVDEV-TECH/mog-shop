@@ -1,8 +1,8 @@
  // ====== ORDER PAGE (order/page.tsx) ======
  // ====== ORDER PAGE (order/page.tsx) ======
 "use client";
-import { useCart } from "@/app/Component/ContextCart/page";
-import { useAuth } from "@/app/ContextAuth/Authcontext";
+import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Image from "next/image";

@@ -1,4 +1,4 @@
- 'use client'
+'use client'
 
 import React, { useEffect, useState, useRef } from 'react'
 import { FiSearch } from "react-icons/fi";
@@ -10,7 +10,7 @@ interface SearchProps {
     isClose: () => void;
 }
 
-const Page: React.FC<SearchProps> = ({ isOpen, isClose }) => {
+const Search: React.FC<SearchProps> = ({ isOpen, isClose }) => {
     const [searchquery, setsearchquery] = useState('');
     
     interface Product {
@@ -180,4 +180,4 @@ const Page: React.FC<SearchProps> = ({ isOpen, isClose }) => {
     );
 }
 
-export default Page;
+export default Search;

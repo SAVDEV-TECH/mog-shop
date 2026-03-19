@@ -1,16 +1,16 @@
- 'use client'
+'use client'
 
 import Link from 'next/link'
 import Image from 'next/image'
 import React, { useState } from 'react'
 import { FiSearch } from "react-icons/fi"
-import Search from '@/app/Component/Search/searchitem'
-import { useCart } from '../ContextCart/page'
-import { useWishlist } from '../ContextWishlist/page'
-import { useAuth } from '@/app/ContextAuth/Authcontext'
+import Search from '@/components/Search'
+import { useCart } from '@/context/CartContext'
+import { useWishlist } from '@/context/WishlistContext'
+import { useAuth } from '@/context/AuthContext'
 import { signOut } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
-import ThemeToggle from '@/app/Component/ThemeToggle/ThemeToggle'
+import ThemeToggle from '@/components/ThemeToggle'
 import { GiHamburgerMenu } from "react-icons/gi"
 import { LiaTimesSolid } from "react-icons/lia"
 import { useRouter } from 'next/navigation'
@@ -22,7 +22,7 @@ const item_navbar = [
   { name: 'signup', path: '/signin' }
 ]
 
-export default function Navbar() {
+export default function Header() {
   const [showslidesearch, setshowslidesearch] = useState(false)
   const [showNavbar, setshowNavbar] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -132,11 +132,11 @@ export default function Navbar() {
               </span>
             )}
           </Link>
-      <ThemeToggle/>
+          <ThemeToggle/>
           {/* Cart */}
           <Link 
             className="hover:bg-[#f5f5f5] dark:hover:bg-gray-800 rounded-full p-2 flex items-center transition-colors relative text-gray-900 dark:text-gray-100" 
-            href="/Component/cartpage" 
+            href="/cart" 
             title={`Bag Items: ${items.length}`}
             aria-label={`Shopping bag with ${items.length} items`}
           >
@@ -307,7 +307,7 @@ export default function Navbar() {
             <>
               <li className="border-b border-gray-100 dark:border-gray-800/50">
                 <Link 
-                  href="/order" 
+                   href="/order" 
                   className='block px-4 py-4 text-base font-medium text-gray-900 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors'
                   onClick={closeNav}
                 >
@@ -391,5 +391,3 @@ export default function Navbar() {
     </nav>
   )
 }
-
- 
