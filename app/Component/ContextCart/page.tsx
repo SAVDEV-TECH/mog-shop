@@ -1,5 +1,5 @@
  "use client";
-import React, { createContext, useContext, useReducer, useMemo } from "react";
+import React, { createContext, useContext, useReducer, useMemo, useEffect } from "react";
 
 // ====== Type definitions ======
 interface CartItem {
@@ -19,7 +19,9 @@ type CartAction =
   | { type: "REMOVE_ITEM"; id: string }
   | { type: "INCREASE_QUANTITY"; id: string }
   | { type: "DECREASE_QUANTITY"; id: string }
-  | { type: "CLEAR_CART" };
+  | { type: "DECREASE_QUANTITY", id: string }
+  | { type: "CLEAR_CART" }
+  | { type: "SET_CART"; items: CartItem[] };
 
 // ====== Create context ======
 const CartContext = createContext<{
@@ -28,10 +30,12 @@ const CartContext = createContext<{
   total: number;
 } | null>(null);
 
-// ====== Initial state ======
 const initialState: CartState = {
   items: [],
 };
+
+// Key for localStorage
+const CART_STORAGE_KEY = "mogshop_cart";
 
 // ====== Reducer ======
 function cartReducer(state: CartState, action: CartAction): CartState {
@@ -87,16 +91,41 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     case "CLEAR_CART":
       return initialState;
 
+    case "SET_CART":
+      return { ...state, items: action.items };
+
     default:
       throw new Error(`Unhandled action type`);
   }
 }
 
-// ====== Provider ======
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  // Use a temporary state initially for SSR matching
   const [state, dispatch] = useReducer(cartReducer, initialState);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+    if (savedCart) {
+      try {
+        const parsedCart = JSON.parse(savedCart);
+        if (parsedCart.items && Array.isArray(parsedCart.items)) {
+          dispatch({ type: "SET_CART", items: parsedCart.items });
+        }
+      } catch (e) {
+        console.error("Failed to load cart from localStorage", e);
+      }
+    }
+  }, []);
+
+  // Save to localStorage when state changes
+  useEffect(() => {
+    if (state.items.length > 0 || localStorage.getItem(CART_STORAGE_KEY)) {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state));
+    }
+  }, [state]);
 
   // Memoized total calculation
   const total = useMemo(

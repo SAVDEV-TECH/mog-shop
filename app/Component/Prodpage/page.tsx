@@ -4,7 +4,11 @@ import React, { useEffect, useState } from "react";
 import ProductGarage from "../ProductGarage/productGarage";
 import Image from "next/image";
 import { useCart } from "../ContextCart/page";
+import { useWishlist } from "../ContextWishlist/page";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { Heart } from "lucide-react";
+
 
 const store = [
   { text: "Beef" },
@@ -25,7 +29,6 @@ interface ProductsParam {
 
 function Prodpage() {
   const [slidetoleft, setSlidetoleft] = useState(true);
-  const [isfixed, setIsFixed] = useState(false);
   const [isMobile, setisMobile] = useState(false);
   const [products, setProducts] = useState<ProductsParam[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,19 +37,10 @@ function Prodpage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   
   const { dispatch } = useCart();
+  const { dispatch: wishlistDispatch, isInWishlist } = useWishlist();
   const router = useRouter();
   
   const [categories, setCategories] = useState<string[]>([]);
-
-  useEffect(() => {
-    const checkScroll = () => {
-      setIsFixed(window.scrollY > 200);
-    };
-    window.addEventListener("scroll", checkScroll);
-    return () => {
-      window.removeEventListener("scroll", checkScroll);
-    };
-  }, []);
 
   useEffect(() => {
     async function fetchproduct() {
@@ -110,6 +104,31 @@ function Prodpage() {
         quantity: 1,
       },
     });
+    toast.success(`${product.name} added to cart!`);
+  };
+
+  const handleToggleWishlist = (product: ProductsParam, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const inWishlist = isInWishlist(product.id);
+    wishlistDispatch({
+      type: "TOGGLE_ITEM",
+      item: {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        images: product.imageUrl,
+      },
+    });
+    
+    if (inWishlist) {
+      toast.success(`Removed ${product.name} from wishlist`);
+    } else {
+      toast.success(`Added ${product.name} to wishlist!`, {
+        icon: "❤️"
+      });
+    }
   };
 
   // Filter products by category and search query
@@ -125,11 +144,11 @@ function Prodpage() {
       <ProductGarage setSlidetoleft={setSlidetoleft} slidetoleft={slidetoleft} />
 
       {/* Back Button - Sticky at top */}
-      <div className="sticky top-0 z-20 bg-white shadow-sm">
-        <div className="w-[92%] mx-auto py-3">
+      <div className="sticky top-0 z-20 bg-white dark:bg-[#0a0a0a] shadow-sm dark:shadow-black border-b border-transparent dark:border-gray-800">
+        <div className="w-11/12 max-w-7xl mx-auto py-3">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+            className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
           >
             <svg 
               className="w-5 h-5" 
@@ -149,24 +168,24 @@ function Prodpage() {
         </div>
       </div>
 
-      <div className="w-[92%] flex flex-col relative p-3 md:flex-row mx-auto gap-2 justify-center">
+      <div className="w-11/12 max-w-7xl flex flex-col relative p-3 md:flex-row mx-auto gap-6 justify-center">
         {/* Sidebar for categories (mobile or desktop) */}
         {(isMobile || slidetoleft) && (
           <div
-            className={`${isfixed ? "md:sticky top-10" : ""} md:overflow-y-scroll w-full md:h-[80vh] md:w-[20%]`}
+            className="md:sticky md:top-24 md:overflow-y-auto w-full md:h-[calc(100vh-8rem)] md:w-1/4 lg:w-1/5 shrink-0"
           >
-            <h2 className="flex justify-between md:border-b border-gray-400 pb-7 gap-3 items-center">
-              <p className="text-[20px] text-nowrap">Pick up today</p>
-              <span className="w-[30px] inline-flex rounded-full py-1 items-center h-[18px] bg-gray-400 shadow">
-                <div className="w-[15px] bg-white ml-[2px] rounded-full h-[15px]"></div>
+            <h2 className="flex justify-between md:border-b border-gray-400 dark:border-gray-800 pb-7 gap-3 items-center">
+              <p className="text-[20px] text-nowrap text-gray-900 dark:text-gray-100">Pick up today</p>
+              <span className="w-[30px] inline-flex rounded-full py-1 items-center h-[18px] bg-gray-400 dark:bg-gray-600 shadow">
+                <div className="w-[15px] bg-white dark:bg-[#0a0a0a] ml-[2px] rounded-full h-[15px]"></div>
               </span>
             </h2>
             
-            <div className="mt-4 mb-2 font-bold">Categories</div>
+            <div className="mt-4 mb-2 font-bold text-gray-900 dark:text-gray-100">Categories</div>
             <ul className="flex flex-row gap-2 md:flex-col w-full">
               <li>
                 <button 
-                  className={`text-[10px] md:text-[14px] ${selectedCategory === null ? 'font-bold text-blue-600' : ''}`}
+                  className={`text-[10px] md:text-[14px] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 ${selectedCategory === null ? 'font-bold text-blue-600 dark:!text-blue-400' : ''}`}
                   onClick={() => setSelectedCategory(null)}
                 >
                   All Products
@@ -175,7 +194,7 @@ function Prodpage() {
               {categories.map((category, i) => (
                 <li key={i}>
                   <button 
-                    className={`text-[10px] md:text-[14px] ${selectedCategory === category ? 'font-bold text-blue-600' : ''}`}
+                    className={`text-[10px] md:text-[14px] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 ${selectedCategory === category ? 'font-bold text-blue-600 dark:!text-blue-400' : ''}`}
                     onClick={() => setSelectedCategory(category)}
                   >
                     {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -184,11 +203,11 @@ function Prodpage() {
               ))}
             </ul>
             
-            <div className="mt-6 mb-2 font-bold">Popular</div>
+            <div className="mt-6 mb-2 font-bold text-gray-900 dark:text-gray-100">Popular</div>
             <ul className="flex flex-row gap-2 md:flex-col w-full">
               {store.map((prod, i) => (
                 <li key={i}>
-                  <Link className="text-[10px] md:text-[14px]" href="/">
+                  <Link className="text-[10px] md:text-[14px] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100" href="/">
                     {prod.text}
                   </Link>
                 </li>
@@ -198,16 +217,16 @@ function Prodpage() {
         )}
 
         {/* Products Grid with Search Bar */}
-        <div className="w-[100%]">
+        <div className="flex-1 w-full min-w-0">
           {/* Search Bar */}
-          <div className="mb-6 sticky top-16 bg-white z-10 py-3">
+          <div className="mb-6 sticky top-16 md:top-20 bg-white dark:bg-[#0a0a0a] z-10 py-3 transition-colors">
             <div className="relative">
               <input
                 type="text"
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-3 pl-10 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition text-sm md:text-base"
+                className="w-full px-4 py-3 pl-10 border-2 border-gray-300 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-lg focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 transition text-sm md:text-base"
               />
               <svg
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
@@ -236,7 +255,7 @@ function Prodpage() {
               )}
             </div>
             {searchQuery && (
-              <p className="mt-2 text-xs md:text-sm text-gray-600">
+              <p className="mt-2 text-xs md:text-sm text-gray-600 dark:text-gray-400">
                 Found {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
               </p>
             )}
@@ -247,11 +266,11 @@ function Prodpage() {
             {loading ? (
               // Loading state
               Array.from({ length: 8 }).map((_, index) => (
-                <div key={index} className="border p-4 rounded-lg shadow-md animate-pulse">
-                  <div className="bg-gray-200 h-[150px] md:h-[200px] w-[60%] mx-auto mb-4"></div>
-                  <div className="bg-gray-200 h-4 w-3/4 mb-2 rounded"></div>
-                  <div className="bg-gray-200 h-4 w-1/4 mb-2 rounded"></div>
-                  <div className="bg-gray-200 h-4 w-1/3 rounded"></div>
+                <div key={index} className="border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 p-4 rounded-lg shadow-md dark:shadow-none animate-pulse">
+                  <div className="bg-gray-200 dark:bg-gray-800 h-[150px] md:h-[200px] w-[60%] mx-auto mb-4 rounded"></div>
+                  <div className="bg-gray-200 dark:bg-gray-800 h-4 w-3/4 mb-2 rounded"></div>
+                  <div className="bg-gray-200 dark:bg-gray-800 h-4 w-1/4 mb-2 rounded"></div>
+                  <div className="bg-gray-200 dark:bg-gray-800 h-4 w-1/3 rounded"></div>
                 </div>
               ))
             ) : error ? (
@@ -272,13 +291,24 @@ function Prodpage() {
                 return (
                   <div
                     key={product.id}
-                    className="group relative font-bold inline-block border p-4 rounded-lg shadow-md transition-transform duration-300 hover:scale-[1.05]"
+                    className="group relative font-bold inline-block border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 rounded-lg shadow-md dark:shadow-none transition-all duration-300 hover:scale-[1.05] hover:shadow-xl dark:hover:shadow-blue-900/10"
                   >
-                    <span className="absolute inset-0 bg-gray-300 opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-2xl pointer-events-none" />
+                    <span className="absolute inset-0 bg-gray-300 dark:bg-white opacity-0 group-hover:opacity-10 dark:group-hover:opacity-5 transition-opacity duration-300 rounded-2xl pointer-events-none" />
+
+                    {/* Wishlist Heart Button */}
+                    <button
+                      onClick={(e) => handleToggleWishlist(product, e)}
+                      className="absolute top-2 right-2 z-10 p-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-sm hover:bg-white dark:hover:bg-gray-700 transition"
+                    >
+                      <Heart 
+                        size={18} 
+                        className={`${isInWishlist(product.id) ? "fill-red-500 text-red-500" : "text-gray-400 dark:text-gray-500"}`} 
+                      />
+                    </button>
 
                     <div>
                       <Image
-                        src={product.imageUrl || "/globe.svg"}
+                        src={product.imageUrl || "/placeholder.svg"}
                         alt={product.name || "Product Image"}
                         width={300}
                         height={200}
@@ -286,12 +316,12 @@ function Prodpage() {
                         loading="lazy"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          target.src = "/globe.svg";
+                          target.src = "/placeholder.svg";
                         }}
                       />
-                      <div className="pl-2 mt-2 text-sm md:text-base font-medium truncate">{product.name}</div>
-                      <div className="pl-2 text-green-700">#{product.price}</div>
-                      <div className="pl-2 mt-1 text-xs text-gray-500">{product.category}</div>
+                      <div className="pl-2 mt-2 text-sm md:text-base font-medium truncate text-gray-900 dark:text-gray-100">{product.name}</div>
+                      <div className="pl-2 text-green-700 dark:text-green-500">#{product.price}</div>
+                      <div className="pl-2 mt-1 text-xs text-gray-500 dark:text-gray-400">{product.category}</div>
                       
                       {/* Buttons */}
                       <div className="flex flex-col gap-2 mt-3">
@@ -315,7 +345,7 @@ function Prodpage() {
             ) : (
               // No products found
               <div className="col-span-full text-center p-10">
-                <p className="text-gray-500">
+                <p className="text-gray-500 dark:text-gray-400">
                   {searchQuery 
                     ? `No products found matching "${searchQuery}"` 
                     : "No products available in this category"}

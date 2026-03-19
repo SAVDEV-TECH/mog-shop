@@ -43,8 +43,8 @@ export default function ProductDetailPage() {
     fetchProduct();
   }, [id]);
 
-  if (loading) return <div className="text-center p-10">Loading...</div>;
-  if (!product) return <div className="text-center p-10">Product not found</div>;
+  if (loading) return <div className="text-center p-10 text-gray-700 dark:text-gray-300">Loading...</div>;
+  if (!product) return <div className="text-center p-10 text-gray-700 dark:text-gray-300">Product not found</div>;
 
   return <ProductDetailsPage product={product} />;
 }

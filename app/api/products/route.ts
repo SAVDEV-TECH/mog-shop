@@ -3,7 +3,8 @@ export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getAllProducts } from '@/lib/products';
 
 
 
@@ -92,48 +93,10 @@ export async function POST(req: Request) {
 // === Fetch all products (GET) ===
 export async function GET() {
   try {
-    console.log("Fetching products from Firestore...");
-    
-    const productsRef = collection(db, 'products');
-    const q = query(productsRef, orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-
-    console.log(`Found ${snapshot.size} products`);
-
-    const products = snapshot.docs.map((doc) => {
-      const data = doc.data() as Record<string, unknown>;
-      const createdAtVal = data['createdAt'] as unknown;
-
-      // Support Firestore Timestamp objects and ISO strings
-      let createdAt: string | null = null;
-      if (createdAtVal && typeof (createdAtVal as { toDate?: unknown }).toDate === 'function') {
-        createdAt = (createdAtVal as { toDate: () => Date }).toDate().toISOString();
-      } else if (typeof createdAtVal === 'string') {
-        createdAt = createdAtVal;
-      }
-
-      return {
-        id: doc.id,
-        name: (data['name'] as string) || '',
-        price: (data['price'] as number) || 0,
-        category: (data['category'] as string) || 'Uncategorized',
-        imageUrl: (data['imageUrl'] as string) || '',
-        createdAt,
-      };
-    });
-
+    const products = await getAllProducts();
     return NextResponse.json(products, { status: 200 });
   } catch (err) {
     console.log("Error fetching products:", err);
-    
-    if (err instanceof Error) {
-      console.log("Error details:", {
-        message: err.message,
-        name: err.name,
-        stack: err.stack
-      });
-    }
-    
     return NextResponse.json({ 
       error: "Failed to fetch products",
       details: err instanceof Error ? err.message : String(err)

@@ -24,7 +24,7 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
    
   // Check if product exists first
   if (!product) {
-    return <div className="p-10 text-center text-lg">Product not found</div>;
+    return <div className="p-10 text-center text-lg text-gray-700 dark:text-gray-300">Product not found</div>;
   }
 
   // Simply use imageUrl (it's already a string, not an array!)
@@ -47,7 +47,7 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
     <div className="max-w-5xl mx-auto p-4">
       <div className="flex flex-col md:items-center md:flex-row gap-8">
         {/* Product Image */}
-        <div className="flex-1 relative rounded-lg h-[75vh] bg-slate-500 overflow-hidden">
+        <div className="flex-1 relative rounded-lg h-[75vh] bg-slate-100 dark:bg-gray-800 overflow-hidden">
           <div className="relative w-full h-full">
             <Image
               src={productImage}
@@ -63,9 +63,9 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
 
         {/* Product Details */}
         <div className="flex-1 flex flex-col gap-4">
-          <h1 className="text-2xl font-bold">{product.name}</h1>    {/* Changed from title */}
-          <p className="text-gray-500">Category: {product.category}</p>    {/* Changed from beauty */}
-          <p className="text-lg font-semibold text-green-700">${product.price}</p>
+          <h1 className="text-2xl font-bold dark:text-gray-100">{product.name}</h1>    {/* Changed from title */}
+          <p className="text-gray-500 dark:text-gray-400">Category: {product.category}</p>    {/* Changed from beauty */}
+          <p className="text-lg font-semibold text-green-700 dark:text-green-400">${product.price}</p>
           {product.rating && (
             <p className="text-yellow-500">⭐ {product.rating} / 5</p>
           )}

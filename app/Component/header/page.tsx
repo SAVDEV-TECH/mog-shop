@@ -6,6 +6,7 @@ import React, { useState } from 'react'
 import { FiSearch } from "react-icons/fi"
 import Search from '@/app/Component/Search/searchitem'
 import { useCart } from '../ContextCart/page'
+import { useWishlist } from '../ContextWishlist/page'
 import { useAuth } from '@/app/ContextAuth/Authcontext'
 import { signOut } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
@@ -18,7 +19,7 @@ const item_navbar = [
   { name: 'home', path: '/' },
   { name: 'product', path: '/' },
   
-  { name: 'signup', path: '/sigin' }
+  { name: 'signup', path: '/signin' }
 ]
 
 export default function Navbar() {
@@ -26,6 +27,7 @@ export default function Navbar() {
   const [showNavbar, setshowNavbar] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const { state: { items } } = useCart()
+  const { state: { items: wishlistItems } } = useWishlist()
   const { user } = useAuth()
   const router = useRouter()
   
@@ -48,7 +50,7 @@ export default function Navbar() {
   }
    
   return (
-    <nav className='sticky top-0 z-50 bg-white border-b border-gray-200'>
+    <nav className='sticky top-0 z-50 bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 transition-colors'>
       <div className='flex w-full px-4 sm:px-6 md:px-8 lg:px-14 h-[60px] md:h-[70px] gap-2 sm:gap-4 md:gap-9 items-center justify-between'>
         {/* Logo */}
         <div className='flex-shrink-0'> 
@@ -96,7 +98,7 @@ export default function Navbar() {
           {/* Desktop Search Button */}
           <button
             onClick={() => setshowslidesearch(true)} 
-            className="hidden md:flex cursor-pointer group items-center rounded-full px-3 gap-2 bg-[#f5f5f5] hover:bg-[#e5e5e5] h-[40px] transition-colors"
+            className="hidden md:flex cursor-pointer group items-center rounded-full px-3 gap-2 bg-[#f5f5f5] dark:bg-gray-800 hover:bg-[#e5e5e5] dark:hover:bg-gray-700 h-[40px] transition-colors text-gray-900 dark:text-gray-100"
             aria-label="Search"
           >
             <div className='flex items-center justify-center w-[24px] h-[24px]'>
@@ -108,27 +110,32 @@ export default function Navbar() {
           {/* Mobile Search Icon */}
           <button
             onClick={() => setshowslidesearch(true)} 
-            className="flex md:hidden p-2 hover:bg-[#f5f5f5] rounded-full transition-colors"
+            className="flex md:hidden p-2 hover:bg-[#f5f5f5] dark:hover:bg-gray-800 rounded-full transition-colors text-gray-900 dark:text-gray-100"
             aria-label="Search"
           >
             <FiSearch size={20} />
           </button>
 
           {/* Favourites */}
-          {/* <Link 
-            className='hidden sm:flex hover:bg-[#f5f5f5] rounded-full p-2 transition-colors' 
-            href="/Component/Demosearch" 
+          <Link 
+            className='hidden sm:flex hover:bg-[#f5f5f5] dark:hover:bg-gray-800 rounded-full p-2 transition-colors relative text-gray-900 dark:text-gray-100' 
+            href="/wishlist" 
             title="Favourites"
             aria-label="Favourites"
           > 
             <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" role="img" width="24px" height="24px" fill="none">
               <path stroke="currentColor" strokeWidth="1.5" d="M16.794 3.75c1.324 0 2.568.516 3.504 1.451a4.96 4.96 0 010 7.008L12 20.508l-8.299-8.299a4.96 4.96 0 010-7.007A4.923 4.923 0 017.205 3.75c1.324 0 2.568.516 3.504 1.451l.76.76.531.531.53-.531.76-.76a4.926 4.926 0 013.504-1.451"></path>
             </svg>
-          </Link>*/}
+            {wishlistItems.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
+                {wishlistItems.length}
+              </span>
+            )}
+          </Link>
       <ThemeToggle/>
           {/* Cart */}
           <Link 
-            className="hover:bg-[#f5f5f5] rounded-full p-2 flex items-center transition-colors relative" 
+            className="hover:bg-[#f5f5f5] dark:hover:bg-gray-800 rounded-full p-2 flex items-center transition-colors relative text-gray-900 dark:text-gray-100" 
             href="/Component/cartpage" 
             title={`Bag Items: ${items.length}`}
             aria-label={`Shopping bag with ${items.length} items`}
@@ -151,7 +158,7 @@ export default function Navbar() {
             <div className="relative hidden sm:block">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center gap-2 hover:bg-[#f5f5f5] rounded-full p-1 transition-colors"
+                className="flex items-center gap-2 hover:bg-[#f5f5f5] dark:hover:bg-gray-800 rounded-full p-1 transition-colors"
                 aria-label="User menu"
               >
                 {user.photoURL ? (
@@ -177,36 +184,36 @@ export default function Navbar() {
                     className="fixed inset-0 z-40" 
                     onClick={() => setShowUserMenu(false)}
                   />
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
-                    <div className="px-4 py-3 border-b border-gray-200">
-                      <p className="text-sm font-semibold text-gray-900">{user.displayName || 'User'}</p>
-                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-800 py-2 z-50 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{user.displayName || 'User'}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                     </div>
                     <Link
                       href="/order"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                       onClick={() => setShowUserMenu(false)}
                     >
                       📦 My Orders
                     </Link>
                     <Link
                       href="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                       onClick={() => setShowUserMenu(false)}
                     >
                       👤 Profile
                     </Link>
                     <Link
-                      href="/Component/Demosearch"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      href="/wishlist"
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                       onClick={() => setShowUserMenu(false)}
                     >
-                      ❤️ Favourites
+                      ❤️ Favourites ({wishlistItems.length})
                     </Link>
-                    <hr className="my-2" />
+                    <hr className="my-2 border-gray-200 dark:border-gray-800" />
                     <button
                       onClick={handleSignOut}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                     >
                       🚪 Sign Out
                     </button>
@@ -217,7 +224,7 @@ export default function Navbar() {
           ) : (
             <Link 
               href="/signin" 
-              className="hidden sm:flex px-3 py-2 rounded-full bg-black text-white text-sm hover:opacity-90 transition-opacity whitespace-nowrap" 
+              className="hidden sm:flex px-3 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black text-sm hover:opacity-90 transition-opacity whitespace-nowrap" 
               title="Sign in"
             >
               Sign in
@@ -227,7 +234,7 @@ export default function Navbar() {
           {/* Mobile Menu Toggle */}
           <button 
             onClick={showslidenav} 
-            className="flex lg:hidden cursor-pointer hover:bg-[#f5f5f5] items-center justify-center rounded-full w-[40px] h-[40px] transition-colors ml-1"
+            className="flex lg:hidden cursor-pointer hover:bg-[#f5f5f5] dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 items-center justify-center rounded-full w-[40px] h-[40px] transition-colors ml-1"
             aria-label="Toggle menu"
             type="button"
           >
@@ -248,18 +255,18 @@ export default function Navbar() {
       {/* Mobile Slide-in Menu */}
       <div
         className={`
-          fixed top-0 right-0 h-full w-[280px] sm:w-[320px] bg-white shadow-2xl
-          transform transition-transform duration-300 ease-in-out z-50
+          fixed top-0 right-0 h-full w-[280px] sm:w-[320px] bg-white dark:bg-[#0a0a0a] shadow-2xl dark:shadow-black
+          transform transition-transform duration-300 ease-in-out z-50 border-l border-transparent dark:border-gray-800
           ${showNavbar ? 'translate-x-0' : 'translate-x-full'}
           lg:hidden
         `}
       >
         {/* Close Button */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold">Menu</h2>
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Menu</h2>
           <button 
             onClick={closeNav} 
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-full transition-colors"
             aria-label="Close menu"
           >
             <LiaTimesSolid size={24} />
@@ -268,7 +275,7 @@ export default function Navbar() {
 
         {/* User Profile Section (Mobile) */}
         {user && (
-          <div className="px-4 py-4 border-b border-gray-200 bg-gray-50">
+          <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
             <div className="flex items-center gap-3">
               {user.photoURL ? (
                 <Image
@@ -285,10 +292,10 @@ export default function Navbar() {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
                   {user.displayName || 'User'}
                 </p>
-                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
               </div>
             </div>
           </div>
@@ -298,19 +305,19 @@ export default function Navbar() {
         <ul className='flex flex-col p-4'> 
           {user && (
             <>
-              <li className="border-b border-gray-100">
+              <li className="border-b border-gray-100 dark:border-gray-800/50">
                 <Link 
                   href="/order" 
-                  className='block px-4 py-4 text-base font-medium hover:bg-gray-50 rounded-lg transition-colors'
+                  className='block px-4 py-4 text-base font-medium text-gray-900 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors'
                   onClick={closeNav}
                 >
                   📦 My Orders
                 </Link>
               </li>
-              <li className="border-b border-gray-100">
+              <li className="border-b border-gray-100 dark:border-gray-800/50">
                 <Link 
                   href="/profile" 
-                  className='block px-4 py-4 text-base font-medium hover:bg-gray-50 rounded-lg transition-colors'
+                  className='block px-4 py-4 text-base font-medium text-gray-900 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors'
                   onClick={closeNav}
                 >
                   👤 Profile
@@ -320,33 +327,40 @@ export default function Navbar() {
           )}
           {item_navbar.map((item, id) =>
             item.path ? (
-              <li key={id} className="border-b border-gray-100">
+              <li key={id} className="border-b border-gray-100 dark:border-gray-800/50">
                 <Link 
                   href={item.path} 
-                  className='block px-4 py-4 capitalize text-base font-medium hover:bg-gray-50 rounded-lg transition-colors'
+                  className='block px-4 py-4 capitalize text-base font-medium text-gray-900 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors'
                   onClick={closeNav}
                 >
                   {item.name}
                 </Link>
               </li>
             ) : (
-              <li key={id} className="border-b border-gray-100">
-                <span className='block px-4 py-4 text-gray-400 cursor-default text-base'>{item.name}</span>
+              <li key={id} className="border-b border-gray-100 dark:border-gray-800/50">
+                <span className='block px-4 py-4 text-gray-400 dark:text-gray-600 cursor-default text-base'>{item.name}</span>
               </li>
             )
           )}
         </ul>
 
         {/* Mobile Bottom Section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 space-y-3">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-800 space-y-3 bg-white dark:bg-[#0a0a0a]">
           <Link 
-            href="/Component/Demosearch" 
-            className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors"
+            href="/wishlist" 
+            className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 text-gray-900 dark:text-gray-200 rounded-lg transition-colors"
             onClick={closeNav}
           >
-            <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" role="img" width="24px" height="24px" fill="none">
-              <path stroke="currentColor" strokeWidth="1.5" d="M16.794 3.75c1.324 0 2.568.516 3.504 1.451a4.96 4.96 0 010 7.008L12 20.508l-8.299-8.299a4.96 4.96 0 010-7.007A4.923 4.923 0 017.205 3.75c1.324 0 2.568.516 3.504 1.451l.76.76.531.531.53-.531.76-.76a4.926 4.926 0 013.504-1.451"></path>
-            </svg>
+            <div className="relative">
+              <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" role="img" width="24px" height="24px" fill="none">
+                <path stroke="currentColor" strokeWidth="1.5" d="M16.794 3.75c1.324 0 2.568.516 3.504 1.451a4.96 4.96 0 010 7.008L12 20.508l-8.299-8.299a4.96 4.96 0 010-7.007A4.923 4.923 0 017.205 3.75c1.324 0 2.568.516 3.504 1.451l.76.76.531.531.53-.531.76-.76a4.926 4.926 0 013.504-1.451"></path>
+              </svg>
+              {wishlistItems.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
+                  {wishlistItems.length}
+                </span>
+              )}
+            </div>
             <span className="text-base font-medium">Favourites</span>
           </Link>
           

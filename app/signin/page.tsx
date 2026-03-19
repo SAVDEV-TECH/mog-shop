@@ -177,7 +177,7 @@ router.push(redirectUrl); // Change to your desired redirect path
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white dark:from-gray-950 dark:to-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Mog Shop Logo */}
         <div className="flex justify-center mb-8">
@@ -212,10 +212,10 @@ router.push(redirectUrl); // Change to your desired redirect path
         </div>
 
         {/* Title */}
-        <h1 className="text-center text-2xl font-bold mb-2 text-blue-900">
+        <h1 className="text-center text-2xl font-bold mb-2 text-blue-900 dark:text-blue-300">
           YOUR ACCOUNT FOR MOG SHOP
         </h1>
-        <p className="text-center text-gray-600 text-sm mb-8">
+        <p className="text-center text-gray-600 dark:text-gray-400 text-sm mb-8">
           {isSignUp ? 'Create your Mog Shop account and start shopping' : 'Sign in to access your Mog Shop account'}
         </p>
 
@@ -230,7 +230,7 @@ router.push(redirectUrl); // Change to your desired redirect path
         )}
 
         {/* Form */}
-        <div className="space-y-4 bg-white p-8 rounded-xl shadow-lg">
+        <div className="space-y-4 bg-white dark:bg-gray-900 p-8 rounded-xl shadow-lg dark:shadow-black border border-transparent dark:border-gray-800">
           {isSignUp && (
             <>
               <div className="relative">
@@ -242,7 +242,7 @@ router.push(redirectUrl); // Change to your desired redirect path
                   value={formData.firstName}
                   onChange={handleInputChange}
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <div className="relative">
@@ -254,7 +254,7 @@ router.push(redirectUrl); // Change to your desired redirect path
                   value={formData.lastName}
                   onChange={handleInputChange}
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <div className="relative">
@@ -265,10 +265,10 @@ router.push(redirectUrl); // Change to your desired redirect path
                   value={formData.dateOfBirth}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-              <p className="text-xs text-gray-500 -mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2">
                 Get special birthday discounts from Mog Shop!
               </p>
             </>
@@ -283,7 +283,7 @@ router.push(redirectUrl); // Change to your desired redirect path
               value={formData.email}
               onChange={handleInputChange}
               required
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
@@ -297,7 +297,7 @@ router.push(redirectUrl); // Change to your desired redirect path
               onChange={handleInputChange}
               required
               minLength={6}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
@@ -305,7 +305,7 @@ router.push(redirectUrl); // Change to your desired redirect path
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center cursor-pointer">
                 <input type="checkbox" className="mr-2 accent-blue-600" />
-                <span className="text-gray-600">Keep me signed in</span>
+                <span className="text-gray-600 dark:text-gray-300">Keep me signed in</span>
               </label>
               <button className="text-blue-600 hover:text-blue-800 font-medium">
                 Forgot password?
@@ -314,7 +314,7 @@ router.push(redirectUrl); // Change to your desired redirect path
           )}
 
           {isSignUp && (
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-gray-500 dark:text-gray-400">
               <label className="flex items-start cursor-pointer">
                 <input type="checkbox" className="mr-2 mt-1 accent-blue-600" />
                 <span>
@@ -324,7 +324,7 @@ router.push(redirectUrl); // Change to your desired redirect path
             </div>
           )}
 
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
             By {isSignUp ? 'creating an account' : 'logging in'}, you agree to Mog Shop&apos;s{' '}
             <button className="text-blue-600 hover:underline">Privacy Policy</button> and{' '}
             <button className="text-blue-600 hover:underline">Terms of Use</button>.
@@ -340,16 +340,16 @@ router.push(redirectUrl); // Change to your desired redirect path
 
           {/* Divider */}
           <div className="flex items-center my-6">
-            <div className="flex-1 border-t border-gray-300"></div>
-            <span className="px-4 text-gray-500 text-sm font-medium">OR</span>
-            <div className="flex-1 border-t border-gray-300"></div>
+            <div className="flex-1 border-t border-gray-300 dark:border-gray-700"></div>
+            <span className="px-4 text-gray-500 dark:text-gray-400 text-sm font-medium">OR</span>
+            <div className="flex-1 border-t border-gray-300 dark:border-gray-700"></div>
           </div>
 
           {/* Google Sign In */}
           <button
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full border-2 border-gray-300 py-3 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-400 transition-all flex items-center justify-center gap-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-3 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 transition-all flex items-center justify-center gap-2 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -362,7 +362,7 @@ router.push(redirectUrl); // Change to your desired redirect path
         </div>
 
         {/* Toggle Sign In/Sign Up */}
-        <p className="text-center text-sm text-gray-600 mt-6">
+        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
           {isSignUp ? 'Already have an account?' : 'New to Mog Shop?'}{' '}
           <button
             onClick={() => {

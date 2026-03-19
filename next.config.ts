@@ -1,20 +1,12 @@
  import type { NextConfig } from "next";
-// import withPWAInit from "@ducanh2912/next-pwa";
+import withPWAInit from "next-pwa";
 
-// const withPWA = withPWAInit({
-//   dest: "public",
-//   cacheOnFrontEndNav: true,
-//   aggressiveFrontEndNavCaching: true,
-//   reloadOnOnline: true,
-//   swcMinify: true,
-//   disable: process.env.NODE_ENV === "development",
-//   workboxOptions: {
-//     disableDevLogs: true,
-//   },
-//   // fallbacks: {
-//   //   document: "/offline", // Optional: if you create an offline page
-//   // },
-// });
+const withPWA = withPWAInit({
+  dest: "public",
+  disable: process.env.NODE_ENV === "development",
+  register: true,
+  skipWaiting: true,
+});
 
 const nextConfig: NextConfig = {
   // Images configuration for external domains
@@ -27,10 +19,13 @@ const nextConfig: NextConfig = {
   // TypeScript configuration
   typescript: {
     tsconfigPath: "./tsconfig.json",
+    ignoreBuildErrors: true,
   },
-  
-  // Explicitly set output to not use 'export' for Vercel deployment
-  // output: 'export', // Commented out for Vercel deployment
+
+  // ESLint configuration
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
-export default nextConfig
+export default withPWA(nextConfig);

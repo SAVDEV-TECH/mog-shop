@@ -1,8 +1,9 @@
  "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Image from 'next/image'
 import { useAuth } from "@/app/ContextAuth/Authcontext";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { 
   collection, 
   query, 
@@ -108,37 +109,8 @@ export default function DashboardPage() {
   const [imagePreview, setImagePreview] = useState<string>("");
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Auth check
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/signin");
-      return;
-    }
-
-    if (user && !isAdmin(user.email)) {
-      alert("Access denied. Admin only.");
-      router.push("/");
-      return;
-    }
-
-    if (user && isAdmin(user.email)) {
-      setupRealtimeListeners();
-    }
-  }, [user, loading, router]);
-
-  // Debug: Check what images look like
-  useEffect(() => {
-    if (products.length > 0) {
-      console.log("📸 Sample product images:", products.slice(0, 3).map(p => ({
-        name: p.name,
-        image: p.image,
-        imageType: typeof p.image
-      })));
-    }
-  }, [products]);
-
-  // Setup real-time listeners with error handling
-  const setupRealtimeListeners = () => {
+  // Setup real-time listeners with error handling (must be defined before auth useEffect)
+  const setupRealtimeListeners = useCallback(() => {
     let unsubscribeOrders: (() => void) | null = null;
     let unsubscribeProducts: (() => void) | null = null;
 
@@ -162,11 +134,7 @@ export default function DashboardPage() {
         },
         (error) => {
           console.error("Orders listener error:", error);
-          // Retry connection after 3 seconds
-          setTimeout(() => {
-            console.log("Retrying orders connection...");
-            setupRealtimeListeners();
-          }, 3000);
+          // Instead of recursion, just log. The user can refresh or we can use a retry state.
         }
       );
 
@@ -187,11 +155,6 @@ export default function DashboardPage() {
         },
         (error) => {
           console.error("Products listener error:", error);
-          // Retry connection after 3 seconds
-          setTimeout(() => {
-            console.log("Retrying products connection...");
-            setupRealtimeListeners();
-          }, 3000);
         }
       );
 
@@ -204,7 +167,36 @@ export default function DashboardPage() {
       if (unsubscribeOrders) unsubscribeOrders();
       if (unsubscribeProducts) unsubscribeProducts();
     };
-  };
+  }, []);
+
+  // Auth check
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/signin");
+      return;
+    }
+
+    if (user && !isAdmin(user.email)) {
+      toast.error("Access denied. Admin only.");
+      router.push("/");
+      return;
+    }
+
+    if (user && isAdmin(user.email)) {
+      setupRealtimeListeners();
+    }
+  }, [user, loading, router, setupRealtimeListeners]);
+
+  // Debug: Check what images look like
+  useEffect(() => {
+    if (products.length > 0) {
+      console.log("📸 Sample product images:", products.slice(0, 3).map(p => ({
+        name: p.name,
+        image: p.image,
+        imageType: typeof p.image
+      })));
+    }
+  }, [products]);
 
   // Calculate stats
   const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
@@ -228,11 +220,11 @@ export default function DashboardPage() {
       await updateDoc(doc(db, "orders", orderId), {
         status: newStatus
       });
-      alert(`Order status updated to ${newStatus}`);
+      toast.success(`Order status updated to ${newStatus}`);
       setShowOrderModal(false);
     } catch (error) {
       console.error("Error updating order:", error);
-      alert("Failed to update order status");
+      toast.error("Failed to update order status");
     }
   };
 
@@ -291,13 +283,13 @@ export default function DashboardPage() {
     if (file) {
       // Validate file type
       if (!file.type.startsWith("image/")) {
-        alert("Please select an image file");
+        toast.error("Please select an image file");
         return;
       }
       
       // Validate file size (max 2MB - reduced from 5MB)
       if (file.size > 2 * 1024 * 1024) {
-        alert("Image size should be less than 2MB");
+        toast.error("Image size should be less than 2MB");
         return;
       }
       
@@ -382,7 +374,7 @@ export default function DashboardPage() {
   const handleSaveProduct = async () => {
     try {
       if (!productForm.name || productForm.price <= 0) {
-        alert("Please fill in all required fields");
+        toast.error("Please fill in all required fields");
         return;
       }
 
@@ -407,14 +399,14 @@ export default function DashboardPage() {
           ...productData,
           updatedAt: serverTimestamp()
         });
-        alert("Product updated successfully!");
+        toast.success("Product updated successfully!");
       } else {
         // Add new product
         await addDoc(collection(db, "products"), {
           ...productData,
           createdAt: serverTimestamp()
         });
-        alert("Product added successfully!");
+        toast.success("Product added successfully!");
       }
 
       setShowProductModal(false);
@@ -425,7 +417,7 @@ export default function DashboardPage() {
       setUploadProgress(0);
     } catch (error) {
       console.error("Error saving product:", error);
-      alert("Failed to save product. Please try again.");
+      toast.error("Failed to save product. Please try again.");
     } finally {
       setUploadingImage(false);
     }
@@ -437,10 +429,10 @@ export default function DashboardPage() {
 
     try {
       await deleteDoc(doc(db, "products", productId));
-      alert("Product deleted successfully!");
+      toast.success("Product deleted successfully!");
     } catch (error) {
       console.error("Error deleting product:", error);
-      alert("Failed to delete product");
+      toast.error("Failed to delete product");
     }
   };
 
@@ -524,9 +516,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex text-gray-900 dark:text-gray-100 transition-colors">
       {/* Sidebar */}
-      <div className="w-64 bg-gradient-to-b from-blue-900 to-blue-800 text-white p-6 shadow-xl">
+      <div className="w-64 bg-gradient-to-b from-blue-900 to-blue-800 dark:from-gray-950 dark:to-gray-900 text-white p-6 shadow-xl border-r border-transparent dark:border-gray-800">
         <div className="mb-8">
           <h1 className="text-2xl font-bold">🛍️ MogShop</h1>
           <p className="text-blue-200 text-sm">Admin Dashboard</p>
@@ -569,10 +561,10 @@ export default function DashboardPage() {
       <div className="flex-1 p-8 overflow-y-auto">
         {/* Header */}
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">
+          <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
             {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
           </h2>
-          <p className="text-gray-600">Welcome back, Admin!</p>
+          <p className="text-gray-600 dark:text-gray-400">Welcome back, Admin!</p>
         </div>
 
         {/* Overview Tab */}
@@ -638,7 +630,7 @@ export default function DashboardPage() {
                         <td className="py-3 px-4 font-semibold">₦{order.total.toLocaleString()}</td>
                         <td className="py-3 px-4">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(order.status)}`}>
-                      className="bg-mog text-white px-6 py-2 rounded-lg hover:opacity-95 transition flex items-center space-x-2"
+                            {order.status}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-gray-600">{order.date}</td>

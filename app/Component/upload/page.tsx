@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import toast from "react-hot-toast";
+
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -9,7 +11,10 @@ export default function UploadPage() {
   const [loading, setLoading] = useState(false);
 
   const handleUpload = async () => {
-    if (!file) return alert("Please select an image");
+    if (!file) {
+      toast.error("Please select an image");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -42,22 +47,22 @@ export default function UploadPage() {
           }),
         });
         const data = await res.json();
-        alert(data.message || uploadJson.message || "Uploaded!");
+        toast.success(data.message || uploadJson.message || "Uploaded!");
       } else {
-        alert(uploadJson.message || "Uploaded!");
+        toast.success(uploadJson.message || "Uploaded!");
       }
     } catch (err: unknown) {
       console.log('Upload error:', err);
       const message = err instanceof Error ? err.message : String(err);
-      alert(message || 'Upload failed');
+      toast.error(message || 'Upload failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-lg mx-auto">
-      <h1 className="text-xl font-bold mb-4">Upload Product</h1>
+    <div className="p-6 max-w-lg mx-auto bg-white dark:bg-gray-950 rounded-xl shadow-md dark:shadow-black border border-transparent dark:border-gray-800 mt-10">
+      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 italic">🚀 Upload Product</h1>
 
       <label className="sr-only" htmlFor="product-name">Product Name</label>
       <input
@@ -89,16 +94,21 @@ export default function UploadPage() {
         placeholder="Category"
         value={category}
         onChange={(e) => setCategory(e.target.value)}
-        className="border p-2 w-full mb-2"
+        className="border border-gray-300 dark:border-gray-800 p-3 w-full mb-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-mog focus:outline-none"
       />
 
-      <label className="sr-only" htmlFor="product-image">Product Image</label>
       <input
         id="product-image"
         aria-label="Product Image"
         type="file"
         onChange={(e) => setFile(e.target.files?.[0] || null)}
-        className="mb-4"
+        className="mb-6 block w-full text-sm text-gray-500 dark:text-gray-400
+          file:mr-4 file:py-2 file:px-4
+          file:rounded-full file:border-0
+          file:text-sm file:font-semibold
+          file:bg-blue-50 file:text-blue-700
+          dark:file:bg-gray-800 dark:file:text-blue-400
+          hover:file:bg-blue-100 dark:hover:file:bg-gray-700 transition"
       />
 
       <button

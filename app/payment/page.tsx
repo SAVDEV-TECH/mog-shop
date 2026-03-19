@@ -3,6 +3,7 @@ import { useCart } from "@/app/Component/ContextCart/page";
 import { useAuth } from "@/app/ContextAuth/Authcontext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { db } from "@/lib/firebase";
 import Backbutton from '@/app/Component/Backbutton/page';
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -108,8 +109,16 @@ export default function PaymentPage() {
     }
   };
 
+  interface OrderNotificationData {
+    total: number;
+    items: any[];
+    paymentMethod: string;
+    paymentReference: string | null;
+    [key: string]: any;
+  }
+
   // Send email notification via API
-  const sendOrderNotification = async (orderId: string, orderData: any) => {
+  const sendOrderNotification = async (orderId: string, orderData: OrderNotificationData) => {
     try {
       const response = await fetch('/api/send-notification', {
         method: 'POST',
@@ -150,7 +159,7 @@ export default function PaymentPage() {
     setLoading(true);
 
     if (typeof window.PaystackPop === "undefined") {
-      alert("Paystack is not loaded. Please refresh the page and try again.");
+      toast.error("Paystack is not loaded. Please refresh the page and try again.");
       setLoading(false);
       return;
     }
@@ -165,22 +174,23 @@ export default function PaymentPage() {
         try {
           const orderId = await saveOrderToFirebase("paystack", response.reference);
 
-          alert(
-            `✅ Payment successful!\n\nOrder ID: ${orderId}\nReference: ${response.reference}\n\nYou will receive a confirmation email shortly.`
+          toast.success(
+            `✅ Payment successful! Order ID: ${orderId}. Reference: ${response.reference}. You will receive a confirmation email shortly.`,
+            { duration: 6000 }
           );
 
           dispatch({ type: "CLEAR_CART" });
           sessionStorage.removeItem("customerInfo");
           router.push("/");
         } catch (error) {
-          alert("Payment successful but there was an error saving your order. Please contact support.");
+          toast.error("Payment successful but there was an error saving your order. Please contact support.");
           console.error(error);
         } finally {
           setLoading(false);
         }
       },
       onClose: function () {
-        alert("Payment cancelled");
+        toast("Payment cancelled", { icon: "ℹ️" });
         setLoading(false);
       },
     });
@@ -198,20 +208,16 @@ export default function PaymentPage() {
       try {
         const orderId = await saveOrderToFirebase("payment-on-delivery");
 
-        alert(
-          `✅ Order placed successfully!\n\nOrder ID: ${orderId}\n` +
-            `Total: ₦${grandTotal.toLocaleString()}\n` +
-            `Payment Method: Cash on Delivery\n` +
-            `Delivery Address: ${customerInfo!.address}\n\n` +
-            `We'll contact you at ${customerInfo!.phone} for delivery confirmation.\n` +
-            `You will receive a confirmation email shortly.`
+        toast.success(
+          `✅ Order placed successfully! Order ID: ${orderId}. Total: ₦${grandTotal.toLocaleString()}. We'll contact you shortly.`,
+          { duration: 8000 }
         );
 
         dispatch({ type: "CLEAR_CART" });
         sessionStorage.removeItem("customerInfo");
         router.push("/");
       } catch (error) {
-        alert("There was an error placing your order. Please try again.");
+        toast.error("There was an error placing your order. Please try again.");
         console.log(error);
       } finally {
         setLoading(false);
@@ -221,7 +227,7 @@ export default function PaymentPage() {
 
   const handleCompleteOrder = () => {
     if (!paymentMethod) {
-      alert("Please select a payment method");
+      toast.error("Please select a payment method");
       return;
     }
 
@@ -255,78 +261,78 @@ export default function PaymentPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-4">
-      <h2 className="text-3xl font-bold mb-6">💳 Payment</h2>
+    <div className="max-w-3xl mx-auto p-4 text-gray-900 dark:text-gray-100">
+      <h2 className="text-3xl font-bold mb-6 dark:text-gray-100">💳 Payment</h2>
       <Backbutton />
       
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h3 className="text-lg font-semibold mb-3">Delivery Information</h3>
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md dark:shadow-black border border-transparent dark:border-gray-800 p-6 mb-6">
+        <h3 className="text-lg font-semibold mb-3 dark:text-gray-100">Delivery Information</h3>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-gray-600">Name:</p>
-            <p className="font-medium">{customerInfo?.fullName}</p>
+            <p className="text-gray-600 dark:text-gray-400">Name:</p>
+            <p className="font-medium dark:text-gray-200">{customerInfo?.fullName}</p>
           </div>
           <div>
-            <p className="text-gray-600">Phone:</p>
-            <p className="font-medium">{customerInfo?.phone}</p>
+            <p className="text-gray-600 dark:text-gray-400">Phone:</p>
+            <p className="font-medium dark:text-gray-200">{customerInfo?.phone}</p>
           </div>
           <div className="col-span-2">
-            <p className="text-gray-600">Email:</p>
-            <p className="font-medium">{customerInfo?.email}</p>
+            <p className="text-gray-600 dark:text-gray-400">Email:</p>
+            <p className="font-medium dark:text-gray-200">{customerInfo?.email}</p>
           </div>
           <div className="col-span-2">
-            <p className="text-gray-600">Address:</p>
-            <p className="font-medium">{customerInfo?.address}</p>
+            <p className="text-gray-600 dark:text-gray-400">Address:</p>
+            <p className="font-medium dark:text-gray-200">{customerInfo?.address}</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h3 className="text-lg font-semibold mb-3">Order Items ({state.items.length})</h3>
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md dark:shadow-black border border-transparent dark:border-gray-800 p-6 mb-6">
+        <h3 className="text-lg font-semibold mb-3 dark:text-gray-100">Order Items ({state.items.length})</h3>
         <div className="space-y-2">
           {state.items.map((item) => (
             <div key={item.id} className="flex justify-between text-sm">
-              <span>
+              <span className="dark:text-gray-300">
                 {item.name} × {item.quantity}
               </span>
-              <span className="font-medium">
+              <span className="font-medium dark:text-gray-100">
                 ₦{(item.price * item.quantity).toLocaleString()}
               </span>
             </div>
           ))}
         </div>
 
-        <div className="border-t mt-4 pt-4 space-y-2">
+        <div className="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4 space-y-2">
           <div className="flex justify-between text-sm">
-            <span>Subtotal:</span>
-            <span>₦{total.toLocaleString()}</span>
+            <span className="dark:text-gray-400">Subtotal:</span>
+            <span className="dark:text-gray-100">₦{total.toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span>Delivery Fee:</span>
-            <span>₦{deliveryFee.toLocaleString()}</span>
+            <span className="dark:text-gray-400">Delivery Fee:</span>
+            <span className="dark:text-gray-100">₦{deliveryFee.toLocaleString()}</span>
           </div>
-          <div className="flex justify-between text-xl font-bold pt-2 border-t">
-            <span>Total:</span>
-            <span className="text-green-600">₦{grandTotal.toLocaleString()}</span>
+          <div className="flex justify-between text-xl font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
+            <span className="dark:text-gray-100">Total:</span>
+            <span className="text-green-600 dark:text-green-400">₦{grandTotal.toLocaleString()}</span>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h3 className="text-lg font-semibold mb-4">Select Payment Method</h3>
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md dark:shadow-black border border-transparent dark:border-gray-800 p-6 mb-6">
+        <h3 className="text-lg font-semibold mb-4 dark:text-gray-100">Select Payment Method</h3>
 
         <div className="space-y-3">
           <div
             onClick={() => setPaymentMethod("paystack")}
             className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition ${
               paymentMethod === "paystack"
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-200 hover:border-gray-300"
+                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
             }`}
           >
             <div
               className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${
-                paymentMethod === "paystack" ? "border-blue-500" : "border-gray-300"
+                paymentMethod === "paystack" ? "border-blue-500" : "border-gray-300 dark:border-gray-600"
               }`}
             >
               {paymentMethod === "paystack" && (
@@ -334,8 +340,8 @@ export default function PaymentPage() {
               )}
             </div>
             <div>
-              <div className="font-medium">Pay with Paystack</div>
-              <div className="text-sm text-gray-600">Card, Bank Transfer, USSD</div>
+              <div className="font-medium dark:text-gray-100">Pay with Paystack</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Card, Bank Transfer, USSD</div>
             </div>
           </div>
 
@@ -343,13 +349,13 @@ export default function PaymentPage() {
             onClick={() => setPaymentMethod("pod")}
             className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition ${
               paymentMethod === "pod"
-                ? "border-mog bg-mog-50"
-                : "border-gray-200 hover:border-gray-300"
+                ? "border-mog bg-mog-50 dark:bg-mog/10"
+                : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
             }`}
           >
             <div
               className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${
-                paymentMethod === "pod" ? "border-blue-500" : "border-gray-300"
+                paymentMethod === "pod" ? "border-blue-500" : "border-gray-300 dark:border-gray-600"
               }`}
             >
               {paymentMethod === "pod" && (
@@ -357,8 +363,8 @@ export default function PaymentPage() {
               )}
             </div>
             <div>
-              <div className="font-medium">Payment on Delivery</div>
-              <div className="text-sm text-gray-600">Pay with cash when you receive your order</div>
+              <div className="font-medium dark:text-gray-100">Payment on Delivery</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Pay with cash when you receive your order</div>
             </div>
           </div>
         </div>
@@ -367,7 +373,7 @@ export default function PaymentPage() {
       <div className="flex space-x-3">
         <button
           onClick={() => router.back()}
-          className="flex-1 bg-gray-300 text-gray-700 px-4 py-3 rounded-lg font-semibold hover:bg-gray-400 transition"
+          className="flex-1 bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-3 rounded-lg font-semibold hover:bg-gray-400 dark:hover:bg-gray-600 transition"
           disabled={loading}
         >
           Back

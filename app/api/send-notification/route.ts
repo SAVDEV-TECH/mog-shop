@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
     const { orderDetails, userEmail } = await request.json();
 
     // Check if email credentials are configured
-    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    if (!process.env['GMAIL_USER'] || !process.env['GMAIL_APP_PASSWORD']) {
       console.warn('Email credentials not configured. Skipping email notification.');
       return Response.json({ 
         success: true, 
@@ -18,8 +18,8 @@ export async function POST(request: NextRequest) {
     const transporter = nodemailer.createTransport({
       service: 'gmail', // Using service is more reliable than manual host/port
       auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD
+        user: process.env['GMAIL_USER'],
+        pass: process.env['GMAIL_APP_PASSWORD']
       },
       // Add timeout settings
       connectionTimeout: 10000, // 10 seconds
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     // Format items list for email
     const itemsList = orderDetails.items
-      .map((item: any) => `
+      .map((item: { name: string; quantity: number; price: number; }) => `
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #eee;">
             ${item.name}
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     // Send to customer
     try {
       await transporter.sendMail({
-        from: `"Your Nike Store" <${process.env.GMAIL_USER}>`,
+        from: `"MogShop" <${process.env['GMAIL_USER']}>`,
         to: userEmail,
         subject: '✅ Order Confirmation - Thank You!',
         html: `
@@ -135,8 +135,8 @@ export async function POST(request: NextRequest) {
     // Send to admin
     try {
       await transporter.sendMail({
-        from: process.env.GMAIL_USER,
-        to: process.env.ADMIN_EMAIL || process.env.GMAIL_USER,
+        from: process.env['GMAIL_USER'],
+        to: process.env['ADMIN_EMAIL'] || process.env['GMAIL_USER'],
         subject: '🔔 New Order Received - Action Required',
         html: `
           <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif; background-color: #f9f9f9;">
@@ -191,6 +191,38 @@ export async function POST(request: NextRequest) {
       console.log('✅ Admin email sent successfully');
     } catch (emailError) {
       console.error('❌ Failed to send admin email:', emailError);
+    }
+
+    // ── WhatsApp notification via CallMeBot (admin only) ──
+    const callMeBotPhone = process.env['CALLMEBOT_PHONE'];
+    const callMeBotApiKey = process.env['CALLMEBOT_APIKEY'];
+
+    if (callMeBotPhone && callMeBotApiKey) {
+      try {
+        const whatsappMessage = 
+          `🛍️ *New MogShop Order!*\n` +
+          `📦 Order ID: ${orderDetails.id}\n` +
+          `👤 Customer: ${orderDetails.customerName}\n` +
+          `📞 Phone: ${orderDetails.phone}\n` +
+          `💰 Total: ₦${Number(orderDetails.total).toLocaleString()}\n` +
+          `💳 Payment: ${orderDetails.paymentMethod === 'payment-on-delivery' ? 'Cash on Delivery' : 'Paystack'}\n` +
+          `📍 Address: ${orderDetails.deliveryAddress}`;
+
+        const encodedMessage = encodeURIComponent(whatsappMessage);
+        const callMeBotUrl = `https://api.callmebot.com/whatsapp.php?phone=${callMeBotPhone}&text=${encodedMessage}&apikey=${callMeBotApiKey}`;
+
+        const waResponse = await fetch(callMeBotUrl);
+        if (waResponse.ok) {
+          console.log('✅ WhatsApp notification sent successfully!');
+        } else {
+          console.warn('⚠️ WhatsApp notification failed:', await waResponse.text());
+        }
+      } catch (waError) {
+        console.error('❌ WhatsApp notification error:', waError);
+        // Don't throw — emails already sent, WhatsApp is bonus
+      }
+    } else {
+      console.log('ℹ️ CallMeBot credentials not set. Skipping WhatsApp notification.');
     }
 
     return Response.json({ success: true, message: 'Notifications sent successfully' });

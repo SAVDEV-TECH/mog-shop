@@ -18,7 +18,7 @@ export const signInWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, provider);
     return result.user;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Google sign-in error:', error);
     throw error;
   }
@@ -30,7 +30,7 @@ export const signInWithGoogleRedirect = async () => {
   
   try {
     await signInWithRedirect(auth, provider);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Google redirect error:', error);
     throw error;
   }
@@ -44,7 +44,7 @@ export const handleGoogleRedirectResult = async () => {
       return result.user;
     }
     return null;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Redirect result error:', error);
     throw error;
   }
@@ -55,7 +55,7 @@ export const signInWithEmail = async (email: string, password: string) => {
   try {
     const result = await signInWithEmailAndPassword(auth, email, password);
     return result.user;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Email sign-in error:', error);
     throw error;
   }
@@ -66,7 +66,7 @@ export const signUpWithEmail = async (email: string, password: string) => {
   try {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     return result.user;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Email sign-up error:', error);
     throw error;
   }
@@ -76,7 +76,7 @@ export const signUpWithEmail = async (email: string, password: string) => {
 export const logOut = async () => {
   try {
     await signOut(auth);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Sign out error:', error);
     throw error;
   }
