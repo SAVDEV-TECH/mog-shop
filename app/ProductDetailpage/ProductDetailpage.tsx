@@ -54,6 +54,7 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
               alt={product.name || "Product"}
               fill
               priority
+              loading="eager"
               sizes="(max-width: 768px) 100vw, 50vw"
               style={{ objectFit: 'contain' }}
               className="rounded-lg"

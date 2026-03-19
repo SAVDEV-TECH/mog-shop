@@ -307,18 +307,20 @@ function ProdPage() {
                     </button>
 
                     <div>
+                    <div className="relative w-full h-[150px] md:h-[200px] mb-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg overflow-hidden">
                       <Image
                         src={product.imageUrl || "/placeholder.svg"}
                         alt={product.name || "Product Image"}
-                        width={300}
-                        height={200}
-                        className="object-contain w-[60%] h-[150px] md:h-[200px] mx-auto"
+                        fill
+                        className="object-contain p-2"
                         loading="lazy"
+                        sizes="(max-width: 768px) 50vw, 25vw"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src = "/placeholder.svg";
                         }}
                       />
+                    </div>
                       <div className="pl-2 mt-2 text-sm md:text-base font-medium truncate text-gray-900 dark:text-gray-100">{product.name}</div>
                       <div className="pl-2 text-green-700 dark:text-green-500">#{product.price}</div>
                       <div className="pl-2 mt-1 text-xs text-gray-500 dark:text-gray-400">{product.category}</div>

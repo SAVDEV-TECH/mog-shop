@@ -10,10 +10,11 @@ import { useWishlist } from '@/context/WishlistContext'
 import { useAuth } from '@/context/AuthContext'
 import { signOut } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
-import ThemeToggle from '@/components/ThemeToggle'
+import ThemeToggle from './ThemeToggle'
 import { GiHamburgerMenu } from "react-icons/gi"
 import { LiaTimesSolid } from "react-icons/lia"
 import { useRouter } from 'next/navigation'
+import { isAdmin } from '@/lib/adminAuth'
 
 const item_navbar = [
   { name: 'home', path: '/' },
@@ -189,6 +190,15 @@ export default function Header() {
                       <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{user.displayName || 'User'}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                     </div>
+                    {isAdmin(user.email) && (
+                      <Link
+                        href="/dashboard"
+                        className="block px-4 py-2 text-sm text-blue-600 dark:text-blue-400 font-semibold hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        📊 Admin Dashboard
+                      </Link>
+                    )}
                     <Link
                       href="/order"
                       className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -305,6 +315,17 @@ export default function Header() {
         <ul className='flex flex-col p-4'> 
           {user && (
             <>
+              {isAdmin(user.email) && (
+                <li className="border-b border-gray-100 dark:border-gray-800/50">
+                  <Link 
+                    href="/dashboard" 
+                    className='block px-4 py-4 text-base font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded-lg transition-colors'
+                    onClick={closeNav}
+                  >
+                    📊 Admin Dashboard
+                  </Link>
+                </li>
+              )}
               <li className="border-b border-gray-100 dark:border-gray-800/50">
                 <Link 
                    href="/order" 
