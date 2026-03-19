@@ -1,4 +1,4 @@
- import type { NextConfig } from "next";
+import type { NextConfig } from "next";
 import withPWAInit from "next-pwa";
 
 const withPWA = withPWAInit({
@@ -9,9 +9,17 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
+  // Turbopack config (required for Next.js 16)
+  turbopack: {},
+
   // Images configuration for external domains
   images: {
-    domains: ["cdn.dummyjson.com"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cdn.dummyjson.com",
+      },
+    ],
     minimumCacheTTL: 60,
     unoptimized: true,
   },
@@ -20,11 +28,6 @@ const nextConfig: NextConfig = {
   typescript: {
     tsconfigPath: "./tsconfig.json",
     ignoreBuildErrors: true,
-  },
-
-  // ESLint configuration
-  eslint: {
-    ignoreDuringBuilds: true,
   },
 };
 
