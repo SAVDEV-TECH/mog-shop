@@ -1,7 +1,7 @@
  // Client Component (ProductDetailsPage.tsx)
 "use client"
 import Image from "next/image";
-import { useCart } from "../Component/ContextCart/page";
+import { useCart } from "@/context/CartContext";
 
 interface Product {
   id: string;
