@@ -11,8 +11,8 @@ export default function Hero() {
       {/* Background Image with Overlay */}
       <div className="absolute inset-0">
         <Image
-          src="/hero.png"
-          alt="MogShop Premium Products"
+          src="/hero_groceries.png"
+          alt="MogShop Premium Groceries and Provisions"
           fill
           className="object-cover opacity-60"
           priority
@@ -34,12 +34,12 @@ export default function Hero() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold text-white leading-tight tracking-tight">
-            Elevate Your <span className="text-mog">Lifestyle</span> with <br />
-            <span className="bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">MogShop Luxury</span>
+            Your One-Stop <span className="text-mog">Premium</span> Shop for <br />
+            <span className="bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">Everyday Essentials</span>
           </h1>
 
           <p className="text-lg md:text-xl text-gray-300 max-w-lg leading-relaxed font-medium">
-            Discover a curated collection of gourmet meats, premium pet essentials, and high-end aesthetics. Quality defined by excellence.
+            From fresh produce to your favorite snacks and household supplies. We deliver quality groceries and provisions right to your doorstep, defined by excellence.
           </p>
 
           <div className="flex flex-wrap gap-4 pt-4">
