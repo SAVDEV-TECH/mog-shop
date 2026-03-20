@@ -7,6 +7,7 @@
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   User
 } from 'firebase/auth';
 import { auth } from './firebase';
@@ -85,4 +86,14 @@ export const logOut = async () => {
 // Auth State Listener
 export const onAuthStateChange = (callback: (user: User | null) => void) => {
   return onAuthStateChanged(auth, callback);
+};
+
+// Password Reset
+export const resetPassword = async (email: string) => {
+  try {
+    await sendPasswordResetEmail(auth, email);
+  } catch (error: unknown) {
+    console.error('Password reset error:', error);
+    throw error;
+  }
 };

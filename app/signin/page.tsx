@@ -1,51 +1,39 @@
- "use client";
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-
-/* Lightweight local SVG icon components */
-const Mail = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-    <path d="M3 8.5v7A2.5 2.5 0 0 0 5.5 18h13a2.5 2.5 0 0 0 2.5-2.5v-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M21 6.5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v.5l9 6 9-6v-.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-
-const Lock = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-    <rect x="3" y="10" width="18" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M7 10V8a5 5 0 0 1 10 0v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    <circle cx="12" cy="15" r="1.25" fill="currentColor"/>
-  </svg>
-);
-
-const User = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-    <path d="M20 21v-1a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-
-const X = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-    <path d="M18 6L6 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M6 6l12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Mail, 
+  Lock, 
+  User, 
+  X, 
+  ArrowRight, 
+  Github, 
+  Chrome, 
+  ShieldCheck, 
+  KeyRound,
+  Calendar,
+  ChevronLeft
+} from 'lucide-react';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   updateProfile,
   signInWithPopup,
   GoogleAuthProvider,
-  getRedirectResult
+  getRedirectResult,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { toast } from 'react-hot-toast';
+
+type AuthMode = 'signin' | 'signup' | 'forgot-password';
 
 export default function MogShopAuth() {
   const router = useRouter();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [mode, setMode] = useState<AuthMode>('signin');
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -53,334 +41,304 @@ export default function MogShopAuth() {
     password: '',
     dateOfBirth: '',
   });
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Check for Google redirect result on component mount
+  // Check for Google redirect result
   useEffect(() => {
     const checkRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
         if (result) {
-          // User successfully signed in with Google
-          // Get the redirect URL from sessionStorage
-const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || '/';
-// Clear the stored redirect URL
-sessionStorage.removeItem('redirectAfterLogin');
-// Redirect to the intended page
- router.push(redirectUrl);    // Change to your desired redirect path
+          const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || '/';
+          sessionStorage.removeItem('redirectAfterLogin');
+          router.push(redirectUrl);
+          toast.success("Welcome back!");
         }
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        setError(message || 'Google sign-in failed');
+      } catch (err: any) {
+        toast.error(err.message || 'Google sign-in failed');
       }
     };
     checkRedirectResult();
   }, [router]);
 
-  const handleEmailAuth = async (e: { preventDefault: () => void; }) => {
+  const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
-      if (isSignUp) {
-        // Sign up with email
-        const userCredential = await createUserWithEmailAndPassword(
-          auth, 
-          formData.email, 
-          formData.password
-        );
-        
-        // Update user profile with name
+      if (mode === 'signup') {
+        const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
         await updateProfile(userCredential.user, {
           displayName: `${formData.firstName} ${formData.lastName}`
         });
-        
-        // Get the redirect URL from sessionStorage
-const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || '/';
-sessionStorage.removeItem('redirectAfterLogin');
-router.push(redirectUrl); // Change to your desired redirect path
-      } else {
-        // Sign in with email
+        toast.success("Account created successfully!");
+      } else if (mode === 'signin') {
         await signInWithEmailAndPassword(auth, formData.email, formData.password);
-         // Get the redirect URL from sessionStorage
-const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || '/';
-sessionStorage.removeItem('redirectAfterLogin');
-router.push(redirectUrl);; // Change to your desired redirect path
+        toast.success("Logged in successfully!");
+      } else if (mode === 'forgot-password') {
+        await sendPasswordResetEmail(auth, formData.email);
+        toast.success("Password reset link sent to your email!");
+        setMode('signin');
+        return;
       }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      
-      // Make error messages more user-friendly
-      if (message.includes('email-already-in-use')) {
-        setError('This email is already registered. Please sign in instead.');
-      } else if (message.includes('invalid-email')) {
-        setError('Please enter a valid email address.');
-      } else if (message.includes('weak-password')) {
-        setError('Password should be at least 6 characters.');
-      } else if (message.includes('user-not-found') || message.includes('wrong-password')) {
-        setError('Invalid email or password.');
-      } else if (message.includes('invalid-credential')) {
-        setError('Invalid email or password.');
-      } else {
-        setError(message || 'An error occurred');
-      }
+
+      const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || '/';
+      sessionStorage.removeItem('redirectAfterLogin');
+      router.push(redirectUrl);
+    } catch (err: any) {
+      let msg = "Authentication failed";
+      if (err.message.includes('email-already-in-use')) msg = 'Email already registered.';
+      else if (err.message.includes('user-not-found') || err.message.includes('wrong-password')) msg = 'Invalid email or password.';
+      else if (err.message.includes('invalid-credential')) msg = 'Invalid credentials.';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    setError('');
     setLoading(true);
-
     try {
       const provider = new GoogleAuthProvider();
-      
-      // Add additional scopes if needed
-      provider.addScope('profile');
-      provider.addScope('email');
-      
-      // Sign in with popup
-      const result = await signInWithPopup(auth, provider);
-      
-      // Successful sign-in
-      console.log('Google sign-in successful:', result.user);
-      // Get the redirect URL from sessionStorage
-const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || '/';
-sessionStorage.removeItem('redirectAfterLogin');
-router.push(redirectUrl); // Change to your desired redirect path
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      
-      // Handle specific Google sign-in errors
-      if (message.includes('popup-closed-by-user')) {
-        setError('Sign-in cancelled. Please try again.');
-      } else if (message.includes('popup-blocked')) {
-        setError('Popup blocked. Please enable popups and try again.');
-      } else {
-        setError(message || 'Google sign-in failed');
-      }
+      await signInWithPopup(auth, provider);
+      toast.success("Signed in with Google!");
+      const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || '/';
+      sessionStorage.removeItem('redirectAfterLogin');
+      router.push(redirectUrl);
+    } catch (err: any) {
+      toast.error(err.message || 'Google sign-in failed');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const target = e.target as HTMLInputElement;
-    const { name, value } = target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+    exit: { opacity: 0, y: -20, transition: { duration: 0.3 } }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white dark:from-gray-950 dark:to-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Mog Shop Logo */}
-        <div className="flex justify-center mb-8">
-          <div className="relative w-32 h-32">
-            <Image
-              src="https://raw.githubusercontent.com/user-attachments/assets/your-logo-path"
-              alt="Mog Shop"
-              width={128}
-              height={128}
-              className="object-contain"
-              unoptimized
-              onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-          const img = e.currentTarget as HTMLImageElement;
-          img.style.display = 'none';
-          const wrapper = img.closest('div');
-          const next = wrapper?.nextElementSibling as HTMLElement | null;
-          if (next) next.style.display = 'block';
-              }}
-            />
-          </div>
+    <div className="min-h-screen relative overflow-hidden bg-[#0a0a0a] flex items-center justify-center p-4">
+      {/* Background Orbs */}
+      <div className="absolute top-0 -left-4 w-72 h-72 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+      <div className="absolute top-0 -right-4 w-72 h-72 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+      <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
 
-          <svg className="w-32 h-32 hidden" viewBox="0 0 200 200" fill="none" aria-hidden>
-            <path d="M60 100 L140 100 L150 140 L50 140 Z" fill="#1e5a8e" stroke="#1e5a8e" strokeWidth="4"/>
-            <path d="M140 100 L150 70 L50 70 L60 100" fill="#1e5a8e"/>
-            <circle cx="70" cy="150" r="8" fill="#1e5a8e"/>
-            <circle cx="130" cy="150" r="8" fill="#1e5a8e"/>
-            <text x="100" y="125" fontSize="48" fontWeight="bold" fill="#f59e0b" textAnchor="middle">M</text>
-            <rect x="75" y="50" width="12" height="15" fill="#1e5a8e" rx="2"/>
-            <circle cx="95" cy="52" r="6" fill="#1e5a8e"/>
-            <ellipse cx="115" cy="52" rx="8" ry="6" fill="#1e5a8e"/>
-          </svg>
-        </div>
-
-        {/* Title */}
-        <h1 className="text-center text-2xl font-bold mb-2 text-blue-900 dark:text-blue-300">
-          YOUR ACCOUNT FOR MOG SHOP
-        </h1>
-        <p className="text-center text-gray-600 dark:text-gray-400 text-sm mb-8">
-          {isSignUp ? 'Create your Mog Shop account and start shopping' : 'Sign in to access your Mog Shop account'}
-        </p>
-
-        {/* Error Message */}
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-center justify-between">
-            <span>{error}</span>
-            <button onClick={() => setError('')} aria-label="Close error" type="button">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
-        {/* Form */}
-        <div className="space-y-4 bg-white dark:bg-gray-900 p-8 rounded-xl shadow-lg dark:shadow-black border border-transparent dark:border-gray-800">
-          {isSignUp && (
-            <>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  name="firstName"
-                  placeholder="First Name"
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  name="lastName"
-                  placeholder="Last Name"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div className="relative">
-                <input
-                  type="date"
-                  name="dateOfBirth"
-                  placeholder="Date of Birth"
-                  value={formData.dateOfBirth}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2">
-                Get special birthday discounts from Mog Shop!
-              </p>
-            </>
-          )}
-
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email address"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleInputChange}
-              required
-              minLength={6}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          {!isSignUp && (
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center cursor-pointer">
-                <input type="checkbox" className="mr-2 accent-blue-600" />
-                <span className="text-gray-600 dark:text-gray-300">Keep me signed in</span>
-              </label>
-              <button className="text-blue-600 hover:text-blue-800 font-medium">
-                Forgot password?
-              </button>
+      <div className="w-full max-w-xl relative z-10 flex flex-col items-center">
+        {/* Logo Section */}
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.8, type: "spring" }}
+          className="mb-8 cursor-pointer"
+          onClick={() => router.push('/')}
+        >
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full blur opacity-40 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+            <div className="relative bg-black rounded-full p-4 border border-white/10">
+              <Image
+                src="/mog.png"
+                alt="Mog Shop"
+                width={80}
+                height={80}
+                className="brightness-110"
+                unoptimized
+              />
             </div>
-          )}
+          </div>
+        </motion.div>
 
-          {isSignUp && (
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              <label className="flex items-start cursor-pointer">
-                <input type="checkbox" className="mr-2 mt-1 accent-blue-600" />
-                <span>
-                  Sign up for emails to get updates from Mog Shop on products, offers and exclusive deals
-                </span>
-              </label>
-            </div>
-          )}
+        {/* Auth Card */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="w-full bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[2.5rem] shadow-2xl overflow-hidden p-8 md:p-12"
+        >
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={mode}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-6"
+            >
+              <div className="text-center space-y-2">
+                <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+                  {mode === 'signin' && "Welcome Back"}
+                  {mode === 'signup' && "Store Front Access"}
+                  {mode === 'forgot-password' && "Account Recovery"}
+                </h1>
+                <p className="text-gray-400 text-sm">
+                  {mode === 'signin' && "Login to your Mog Shop portal"}
+                  {mode === 'signup' && "Create your digital presence today"}
+                  {mode === 'forgot-password' && "We'll help you get back in"}
+                </p>
+              </div>
 
-          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-            By {isSignUp ? 'creating an account' : 'logging in'}, you agree to Mog Shop&apos;s{' '}
-            <button className="text-blue-600 hover:underline">Privacy Policy</button> and{' '}
-            <button className="text-blue-600 hover:underline">Terms of Use</button>.
+              <form onSubmit={handleEmailAuth} className="space-y-4">
+                {mode === 'signup' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="relative group">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
+                      <input
+                        type="text"
+                        name="firstName"
+                        placeholder="First Name"
+                        required
+                        onChange={handleInputChange}
+                        className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-inner"
+                      />
+                    </div>
+                    <div className="relative group">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
+                      <input
+                        type="text"
+                        name="lastName"
+                        placeholder="Last Name"
+                        required
+                        onChange={handleInputChange}
+                        className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-inner"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Email Address"
+                    required
+                    onChange={handleInputChange}
+                    className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-inner"
+                  />
+                </div>
+
+                {mode !== 'forgot-password' && (
+                  <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
+                    <input
+                      type="password"
+                      name="password"
+                      placeholder="Password"
+                      required
+                      minLength={6}
+                      onChange={handleInputChange}
+                      className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-inner"
+                    />
+                  </div>
+                )}
+
+                {mode === 'signin' && (
+                  <div className="flex items-center justify-between pb-2">
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input type="checkbox" className="w-4 h-4 rounded bg-white/10 border-white/20 text-blue-600 focus:ring-blue-500 focus:ring-offset-0" />
+                      <span className="text-xs text-gray-400 group-hover:text-white transition-colors">Keep me signed in</span>
+                    </label>
+                    <button 
+                      type="button"
+                      onClick={() => setMode('forgot-password')}
+                      className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full relative group overflow-hidden bg-gradient-to-r from-blue-600 to-purple-600 p-[2px] rounded-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+                >
+                  <div className="bg-[#121212] group-hover:bg-transparent transition-colors py-4 rounded-[calc(1rem-1px)] flex items-center justify-center gap-2 font-bold text-white uppercase tracking-widest text-sm">
+                    {loading ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                      <>
+                        {mode === 'signin' && "Authorize"}
+                        {mode === 'signup' && "Initialize Account"}
+                        {mode === 'forgot-password' && "Send Reset Link"}
+                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </div>
+                </button>
+              </form>
+
+              {mode !== 'forgot-password' && (
+                <>
+                  <div className="flex items-center gap-4 py-2">
+                    <div className="flex-1 h-px bg-white/10"></div>
+                    <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">Digital ID</span>
+                    <div className="flex-1 h-px bg-white/10"></div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      onClick={handleGoogleSignIn}
+                      className="flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 py-3 rounded-2xl text-white text-sm font-semibold transition-all"
+                    >
+                      <Chrome size={18} className="text-blue-400" />
+                      Google
+                    </button>
+                    <button className="flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 py-3 rounded-2xl text-white text-sm font-semibold transition-all">
+                      <Github size={18} />
+                      GitHub
+                    </button>
+                  </div>
+                </>
+              )}
+
+              <div className="text-center pt-4">
+                {mode === 'forgot-password' ? (
+                  <button
+                    onClick={() => setMode('signin')}
+                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-white mx-auto transition-colors"
+                  >
+                    <ChevronLeft size={16} />
+                    Back to Sign In
+                  </button>
+                ) : (
+                  <p className="text-sm text-gray-400">
+                    {mode === 'signin' ? "Don't have an ID yet?" : "Already initialized?"}{' '}
+                    <button
+                      onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+                      className="text-blue-400 font-bold hover:text-blue-300 transition-colors"
+                    >
+                      {mode === 'signin' ? "Create one here" : "Sign in here"}
+                    </button>
+                  </p>
+                )}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Footer info */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="mt-12 flex flex-col items-center gap-4 text-center"
+        >
+          <div className="flex items-center gap-6 text-gray-600 text-xs">
+            <span className="hover:text-blue-500 cursor-pointer transition-colors">Privacy Shield</span>
+            <span className="hover:text-blue-500 cursor-pointer transition-colors">System Status</span>
+            <span className="hover:text-blue-500 cursor-pointer transition-colors">Documentation</span>
+          </div>
+          <p className="text-[10px] text-gray-700 uppercase tracking-[0.2em]">
+            &copy; 2026 MOG SHOP SECURE ACCESS LAYER // ALL RIGHTS RESERVED
           </p>
-
-          <button
-            onClick={handleEmailAuth}
-            disabled={loading}
-            className="w-full bg-mog text-white py-3 rounded-lg font-semibold hover:bg-mog-600 transition-all transform hover:scale-[1.02] disabled:opacity-50 shadow-md"
-          >
-            {loading ? 'PROCESSING...' : (isSignUp ? 'CREATE ACCOUNT' : 'SIGN IN')}
-          </button>
-
-          {/* Divider */}
-          <div className="flex items-center my-6">
-            <div className="flex-1 border-t border-gray-300 dark:border-gray-700"></div>
-            <span className="px-4 text-gray-500 dark:text-gray-400 text-sm font-medium">OR</span>
-            <div className="flex-1 border-t border-gray-300 dark:border-gray-700"></div>
-          </div>
-
-          {/* Google Sign In */}
-          <button
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-            className="w-full border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-3 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 transition-all flex items-center justify-center gap-2 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            Continue with Google
-          </button>
-        </div>
-
-        {/* Toggle Sign In/Sign Up */}
-        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
-          {isSignUp ? 'Already have an account?' : 'New to Mog Shop?'}{' '}
-          <button
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setError('');
-              setFormData({
-                firstName: '',
-                lastName: '',
-                email: '',
-                password: '',
-                dateOfBirth: '',
-              });
-            }}
-            className="text-blue-600 underline font-semibold hover:text-blue-800"
-          >
-            {isSignUp ? 'Sign In' : 'Create Account'}
-          </button>
-        </p>
+        </motion.div>
       </div>
     </div>
   );
