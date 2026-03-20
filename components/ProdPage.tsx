@@ -140,7 +140,7 @@ function ProdPage() {
   });
 
   return (
-    <div>
+    <div id="shop-section">
       <ProductGarage setSlidetoleft={setSlidetoleft} slidetoleft={slidetoleft} />
 
       {/* Back Button - Sticky at top */}

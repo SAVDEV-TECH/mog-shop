@@ -18,9 +18,8 @@ import { isAdmin } from '@/lib/adminAuth'
 
 const item_navbar = [
   { name: 'home', path: '/' },
-  { name: 'product', path: '/' },
-  
-  { name: 'signup', path: '/signin' }
+  { name: 'shop', path: '/#shop-section' },
+  { name: 'wishlist', path: '/wishlist' },
 ]
 
 export default function Header() {
@@ -200,7 +199,7 @@ export default function Header() {
                       </Link>
                     )}
                     <Link
-                      href="/order"
+                      href="/my-orders"
                       className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                       onClick={() => setShowUserMenu(false)}
                     >
@@ -328,7 +327,7 @@ export default function Header() {
               )}
               <li className="border-b border-gray-100 dark:border-gray-800/50">
                 <Link 
-                   href="/order" 
+                   href="/my-orders" 
                   className='block px-4 py-4 text-base font-medium text-gray-900 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors'
                   onClick={closeNav}
                 >
