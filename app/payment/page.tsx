@@ -107,7 +107,7 @@ export default function PaymentPage() {
 
   const handlePaystackPayment = () => {
     setLoading(true);
-    const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_KEY || "pk_test_c96cccb18b1d6540ead612acc09289a21aaee16f";
+    const paystackKey = process.env['NEXT_PUBLIC_PAYSTACK_KEY'] || "pk_test_c96cccb18b1d6540ead612acc09289a21aaee16f";
     
     // @ts-ignore
     const handler = window.PaystackPop.setup({
@@ -336,10 +336,6 @@ export default function PaymentPage() {
             </motion.div>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
       </div>
     </div>
   );

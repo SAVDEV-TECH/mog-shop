@@ -96,7 +96,11 @@ export async function GET() {
     const products = await getAllProducts();
     return NextResponse.json(products, { status: 200 });
   } catch (err) {
-    console.log("Error fetching products:", err);
+    console.error("CRITICAL: Error fetching products in API:", err);
+    if (err instanceof Error) {
+      console.error("Error Message:", err.message);
+      console.error("Error Stack:", err.stack);
+    }
     return NextResponse.json({ 
       error: "Failed to fetch products",
       details: err instanceof Error ? err.message : String(err)
