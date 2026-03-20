@@ -4,6 +4,7 @@ import React from "react";
 import { useCart } from "@/context/CartContext";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ShoppingBag, 
@@ -66,17 +67,19 @@ export default function CartPage() {
                     transition={{ delay: idx * 0.05 }}
                     className="group bg-white dark:bg-gray-900 rounded-3xl p-5 md:p-6 shadow-sm border border-transparent dark:border-gray-800 flex gap-4 md:gap-6 items-center"
                   >
-                    <div className="relative w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-2xl overflow-hidden shrink-0 border border-gray-100 dark:border-gray-800">
+                    <Link href={`/p/${item.slug || item.id}`} className="relative w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-2xl overflow-hidden shrink-0 border border-gray-100 dark:border-gray-800">
                       <Image
                         src={item.images || "/placeholder.svg"}
                         alt={item.name}
                         fill
                         className="object-contain p-2"
                       />
-                    </div>
+                    </Link>
                     
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-200 truncate">{item.name}</h3>
+                      <Link href={`/p/${item.slug || item.id}`}>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-200 truncate hover:text-mog transition-colors">{item.name}</h3>
+                      </Link>
                       <p className="text-mog font-black text-sm">₦{item.price.toLocaleString()}</p>
                     </div>
 

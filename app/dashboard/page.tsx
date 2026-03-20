@@ -370,6 +370,16 @@ export default function DashboardPage() {
     }
   };
 
+  // Helper function to generate a slug from a name
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
   // Add/Update product
   const handleSaveProduct = async () => {
     try {
@@ -390,7 +400,8 @@ export default function DashboardPage() {
       const productData = {
         ...productForm,
         image: imageUrl,
-        imageUrl: imageUrl  // Save to both fields for compatibility
+        imageUrl: imageUrl,  // Save to both fields for compatibility
+        slug: generateSlug(productForm.name)
       };
 
       if (editingProduct) {

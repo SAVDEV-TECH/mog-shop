@@ -26,6 +26,7 @@ interface Product {
   rating?: number;
   category: string;
   imageUrl: string;
+  slug: string;
   description?: string;
   stock?: number;
 }
@@ -63,6 +64,7 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
         price: product.price,
         images: productImage,
         quantity: quantity,
+        slug: product.slug,
       },
     });
     toast.success(`Success! ${quantity} ${product.name} added to cart`, {
@@ -76,20 +78,20 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
   };
 
   const toggleWishlist = () => {
+    wishlistDispatch({ 
+      type: 'TOGGLE_ITEM', 
+      item: {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        images: productImage,
+        slug: product.slug
+      } 
+    });
+    
     if (isWishlisted) {
-      wishlistDispatch({ type: 'REMOVE_FROM_WISHLIST', payload: product.id });
       toast.error("Removed from favourites");
     } else {
-      wishlistDispatch({ 
-        type: 'ADD_TO_WISHLIST', 
-        payload: {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          images: productImage,
-          category: product.category
-        } 
-      });
       toast.success("Added to favourites!", { icon: "❤️" });
     }
   };

@@ -26,6 +26,7 @@ export default function WishlistPage() {
         price: item.price,
         images: item.images,
         quantity: 1,
+        slug: item.slug,
       },
     });
     toast.success(`${item.name} added to cart!`);
@@ -60,17 +61,19 @@ export default function WishlistPage() {
                 key={item.id}
                 className="flex items-center gap-4 bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition"
               >
-                <div className="w-20 h-20 relative shrink-0">
+                <Link href={`/p/${item.slug || item.id}`} className="w-20 h-20 relative shrink-0">
                   <Image
                     src={item.images || "/placeholder.svg"}
                     alt={item.name}
                     fill
                     className="object-contain"
                   />
-                </div>
+                </Link>
                 
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-gray-900 dark:text-gray-100 truncate">{item.name}</h3>
+                  <Link href={`/p/${item.slug || item.id}`}>
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100 truncate hover:text-mog transition-colors">{item.name}</h3>
+                  </Link>
                   <p className="text-green-600 dark:text-green-500 font-semibold">₦{item.price.toLocaleString()}</p>
                 </div>
 

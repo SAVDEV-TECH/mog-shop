@@ -25,6 +25,7 @@ interface ProductsParam {
   name: string;
   price: number;
   category?: string;
+  slug: string;
 }
 
 function ProdPage() {
@@ -102,6 +103,7 @@ function ProdPage() {
         price: product.price,
         images: product.imageUrl,
         quantity: 1,
+        slug: product.slug,
       },
     });
     toast.success(`${product.name} added to cart!`);
@@ -119,6 +121,7 @@ function ProdPage() {
         name: product.name,
         price: product.price,
         images: product.imageUrl,
+        slug: product.slug,
       },
     });
     
@@ -328,7 +331,7 @@ function ProdPage() {
                       {/* Buttons */}
                       <div className="flex flex-col gap-2 mt-3">
                         <Link
-                          href={`/ProductDetailpage/${product.id}`}
+                          href={`/p/${product.slug}`}
                           className="w-full bg-mog text-white text-center py-2 px-3 rounded text-xs md:text-sm hover:opacity-95 transition"
                         >
                           View Product

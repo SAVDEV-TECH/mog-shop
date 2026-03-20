@@ -4,26 +4,31 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Package, 
-  ChevronRight, 
-  Clock, 
-  CheckCircle2, 
-  Truck, 
+import {
   ShoppingBag,
-  ExternalLink,
+  ChevronRight,
   Calendar,
-  CreditCard
 } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import Link from "next/link";
 import Image from "next/image";
+
+interface Order {
+  id: string;
+  userId?: string;
+  email?: string;
+  createdAt?: any;
+  status?: string;
+  total?: number;
+  items?: any[];
+  [key: string]: any;
+}
 
 export default function MyOrdersPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,16 +40,37 @@ export default function MyOrdersPage() {
 
     async function fetchOrders() {
       try {
+        // Query by userId (uid)
         const q = query(
           collection(db, "orders"),
-          where("userId", "==", user?.uid),
-          orderBy("createdAt", "desc")
+          where("userId", "==", user?.uid)
         );
-        const querySnapshot = await getDocs(q);
-        const fetchedOrders = querySnapshot.docs.map(doc => ({
+        const snapshot = await getDocs(q);
+        let fetchedOrders: Order[] = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
+
+        // Also try fetching by email as fallback
+        if (fetchedOrders.length === 0 && user?.email) {
+          const emailQuery = query(
+            collection(db, "orders"),
+            where("email", "==", user.email)
+          );
+          const emailSnapshot = await getDocs(emailQuery);
+          fetchedOrders = emailSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+        }
+
+        // Sort in-memory instead of using orderBy (avoids index requirement)
+        fetchedOrders.sort((a: Order, b: Order) => {
+          const dateA = a.createdAt?.toDate?.() ?? new Date(a.createdAt ?? 0);
+          const dateB = b.createdAt?.toDate?.() ?? new Date(b.createdAt ?? 0);
+          return dateB.getTime() - dateA.getTime();
+        });
+
         setOrders(fetchedOrders);
       } catch (error) {
         console.error("Error fetching orders:", error);
@@ -55,6 +81,19 @@ export default function MyOrdersPage() {
 
     fetchOrders();
   }, [user, authLoading, router]);
+
+  // Helper to safely format dates
+  const formatDate = (createdAt: any) => {
+    try {
+      if (!createdAt) return "Recent";
+      if (createdAt?.toDate) return createdAt.toDate().toLocaleDateString();
+      if (typeof createdAt === "string" || typeof createdAt === "number")
+        return new Date(createdAt).toLocaleDateString();
+      return "Recent";
+    } catch {
+      return "Recent";
+    }
+  };
 
   if (authLoading || loading) {
     return (
@@ -99,16 +138,15 @@ export default function MyOrdersPage() {
                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Date</p>
                         <div className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
                           <Calendar size={14} />
-                          {order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString() : 'Recent'}
+                          {formatDate(order.createdAt)}
                         </div>
                       </div>
                       <div className="pt-2">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${
-                          order.status === 'paid' 
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                          : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                        }`}>
-                          {order.status || 'Pending'}
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${order.status === "paid"
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                          : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                          }`}>
+                          {order.status || "Pending"}
                         </span>
                       </div>
                     </div>
@@ -125,7 +163,7 @@ export default function MyOrdersPage() {
                           />
                         </div>
                       ))}
-                      {order.items?.length > 4 && (
+                      {order.items && order.items.length > 4 && (
                         <div className="w-16 h-16 rounded-2xl border-4 border-white dark:border-gray-900 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300 z-10">
                           +{order.items.length - 4}
                         </div>
@@ -134,7 +172,9 @@ export default function MyOrdersPage() {
 
                     {/* Order Actions */}
                     <div className="md:w-1/4 flex flex-col justify-center items-end gap-3">
-                      <p className="text-xl font-black text-gray-900 dark:text-white">₦{order.total?.toLocaleString()}</p>
+                      <p className="text-xl font-black text-gray-900 dark:text-white">
+                        ₦{order.total?.toLocaleString()}
+                      </p>
                       <Link
                         href={`/success?id=${order.id}`}
                         className="flex items-center gap-2 px-6 py-3 bg-mog/10 text-mog hover:bg-mog hover:text-white rounded-2xl text-xs font-bold transition-all group/btn"
@@ -148,7 +188,7 @@ export default function MyOrdersPage() {
               ))}
             </div>
           ) : (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="flex flex-col items-center justify-center py-20 text-center"
@@ -157,8 +197,10 @@ export default function MyOrdersPage() {
                 <ShoppingBag size={48} className="text-gray-300" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">No orders found</h3>
-              <p className="text-gray-500 mb-8 max-w-xs">You haven't placed any orders yet. Start shopping to see your history!</p>
-              <Link 
+              <p className="text-gray-500 mb-8 max-w-xs">
+                You haven't placed any orders yet. Start shopping to see your history!
+              </p>
+              <Link
                 href="/"
                 className="px-10 py-4 bg-mog text-white rounded-[2rem] font-bold shadow-xl shadow-mog/20 hover:scale-105 transition"
               >

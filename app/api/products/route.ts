@@ -30,6 +30,16 @@ function sanitizeData(data: Record<string, unknown>) {
   return sanitized;
 }
 
+// Helper function to generate a slug from a name
+function generateSlug(name: string) {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 // === Create product (POST) ===
 export async function POST(req: Request) {
   try {
@@ -49,7 +59,8 @@ export async function POST(req: Request) {
       price: parseFloat(price), // Ensure it's a number
       category: category ? String(category).trim() : "Uncategorized",
       imageUrl: String(imageUrl).trim(),
-  createdAt: serverTimestamp(),
+      slug: generateSlug(String(name)),
+      createdAt: serverTimestamp(),
     };
 
     // Validate price is a valid number
