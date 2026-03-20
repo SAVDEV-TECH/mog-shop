@@ -15,19 +15,31 @@ const firebaseConfig = {
   measurementId: process.env['NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID']
 };
 
-// Debug: Log config to check if values are loaded (remove in production)
-console.log("Firebase Config Loaded:", {
-  apiKey: firebaseConfig.apiKey ? "✅ Present" : "❌ Missing",
-  projectId: firebaseConfig.projectId || "❌ Missing",
-  authDomain: firebaseConfig.authDomain ? "✅ Present" : "❌ Missing",
-});
-
 // Prevent re-initialization during hot reloads
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+let app;
+try {
+  if (getApps().length > 0) {
+    app = getApp();
+  } else if (firebaseConfig.apiKey) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    console.warn("⚠️ Firebase configuration is missing API Key. Initialization skipped on server.");
+    // Return a dummy app or handle it gracefully
+    app = {} as any; 
+  }
+} catch (error) {
+  console.error("❌ Firebase initialization failed:", error);
+  app = {} as any;
+}
+
+import { Firestore } from "firebase/firestore";
+import { Auth } from "firebase/auth";
+import { FirebaseStorage } from "firebase/storage";
 
 // Firestore & Storage instances
-export const auth= getAuth(app)
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+export const auth = ((app && (app as any).options) ? getAuth(app) : null) as Auth;
+export const db = ((app && (app as any).options) ? getFirestore(app) : null) as Firestore;
+export const storage = ((app && (app as any).options) ? getStorage(app) : null) as FirebaseStorage;
+
 
 export default app;

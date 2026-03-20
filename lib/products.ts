@@ -11,6 +11,7 @@ export interface Product {
 }
 
 export async function getAllProducts(): Promise<Product[]> {
+  if (!db) throw new Error("Firestore Database is not initialized");
   const productsRef = collection(db, 'products');
   const q = query(productsRef, orderBy('createdAt', 'desc'));
   const snapshot = await getDocs(q);
@@ -38,6 +39,7 @@ export async function getAllProducts(): Promise<Product[]> {
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
+  if (!db) throw new Error("Firestore Database is not initialized");
   const docRef = doc(db, 'products', id);
   const docSnap = await getDoc(docRef);
 

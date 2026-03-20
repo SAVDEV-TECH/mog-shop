@@ -2,6 +2,7 @@
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
+
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getAllProducts } from '@/lib/products';
@@ -63,6 +64,7 @@ export async function POST(req: Request) {
 
     console.log("Attempting to save product:", sanitizedData);
 
+    if (!db) throw new Error("Database not initialized");
   const productsRef = collection(db, 'products');
   const docRef = await addDoc(productsRef, sanitizedData);
 
@@ -92,18 +94,22 @@ export async function POST(req: Request) {
 
 // === Fetch all products (GET) ===
 export async function GET() {
+  if (!db) {
+    console.error("❌ Firestore DB instance is not available on server.");
+    return NextResponse.json({ 
+      error: "Database connection failed", 
+      details: "Firebase configuration might be missing on the server."
+    }, { status: 503 });
+  }
+
   try {
     const products = await getAllProducts();
     return NextResponse.json(products, { status: 200 });
-  } catch (err) {
+  } catch (err: any) {
     console.error("CRITICAL: Error fetching products in API:", err);
-    if (err instanceof Error) {
-      console.error("Error Message:", err.message);
-      console.error("Error Stack:", err.stack);
-    }
     return NextResponse.json({ 
       error: "Failed to fetch products",
-      details: err instanceof Error ? err.message : String(err)
+      details: err?.message || String(err)
     }, { status: 500 });
   }
 }
