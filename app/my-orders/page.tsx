@@ -127,7 +127,7 @@ export default function MyOrdersPage() {
                   transition={{ delay: idx * 0.05 }}
                   className="bg-white dark:bg-gray-900 rounded-[2.5rem] p-6 md:p-8 shadow-sm border border-transparent dark:border-gray-800 hover:shadow-xl hover:shadow-blue-900/5 transition-all group"
                 >
-                  <div className="flex flex-col md:flex-row gap-6">
+                  <div className="flex flex-col md:flex-row gap-6 border-b border-gray-100 dark:border-gray-800 pb-6 mb-6">
                     {/* Order Meta */}
                     <div className="md:w-1/4 space-y-4">
                       <div className="space-y-1">
@@ -183,6 +183,36 @@ export default function MyOrdersPage() {
                         <ChevronRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
                       </Link>
                     </div>
+                  </div>
+
+                  {/* Order Tracking Visualizer */}
+                  <div className="w-full pt-2">
+                     <p className="text-xs font-bold text-gray-500 mb-4 uppercase tracking-widest">Track Order Delivery</p>
+                     {order.status === 'cancelled' ? (
+                       <div className="text-red-500 font-bold bg-red-50 dark:bg-red-900/10 p-4 rounded-xl text-center uppercase tracking-widest text-sm border border-red-100 dark:border-red-900/30">
+                         ❌ This order was cancelled
+                       </div>
+                     ) : (
+                       <div className="flex items-center justify-between relative px-4">
+                         {/* Connecting Line */}
+                         <div className="absolute left-[30px] right-[30px] top-4 h-1 bg-gray-200 dark:bg-gray-800 -z-10 rounded-full overflow-hidden">
+                           <div className="h-full bg-mog transition-all duration-1000" style={{ width: `${(Math.max(["pending", "paid", "delivered"].indexOf(order.status || 'pending'), 0) / 2) * 100}%` }} />
+                         </div>
+                         
+                         {/* Steps */}
+                         {["pending", "paid", "delivered"].map((step, stepIdx) => {
+                           const isActive = ["pending", "paid", "delivered"].indexOf(order.status || 'pending') >= stepIdx;
+                           return (
+                             <div key={step} className="flex flex-col items-center gap-3">
+                               <div className={`w-8 h-8 rounded-full border-[3px] flex items-center justify-center transition-all duration-500 ease-out ${isActive ? 'bg-mog border-mog shadow-lg shadow-mog/30 scale-110' : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800'}`}>
+                                 {isActive && <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                               </div>
+                               <span className={`text-[10px] font-black uppercase tracking-wider ${isActive ? 'text-mog' : 'text-gray-400'}`}>{step}</span>
+                             </div>
+                           );
+                         })}
+                       </div>
+                     )}
                   </div>
                 </motion.div>
               ))}

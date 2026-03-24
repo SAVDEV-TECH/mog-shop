@@ -10,6 +10,7 @@ interface product {
     rating?: number;
     category: string;
     imageUrl: string;
+    slug: string;
 }
 
 const ProductDetailspage =dynamic(()=>import("@/app/ProductDetailpage/ProductDetailpage"),{ssr:false})

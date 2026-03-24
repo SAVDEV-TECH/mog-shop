@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Image from 'next/image'
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -16,6 +16,7 @@ import {
   onSnapshot,
   serverTimestamp
 } from "firebase/firestore";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { db } from "@/lib/firebase";
 import { isAdmin } from "@/lib/adminAuth";
 import {
@@ -195,8 +196,34 @@ export default function DashboardPage() {
 
   const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
   const totalOrders = orders.length;
-  const pendingOrders = orders.filter(o => o.status === "pending").length;
   const totalProducts = products.length;
+  const pendingOrders = orders.filter(o => o.status === "pending").length;
+
+  const chartData = useMemo(() => {
+    const dates: Record<string, number> = {};
+    const last30Days = [...Array(30)].map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (29 - i));
+      return d.toLocaleDateString();
+    });
+    
+    last30Days.forEach(date => dates[date] = 0);
+    
+    orders.forEach(order => {
+      const dateKey = order.date as string;
+      if (dates[dateKey] !== undefined && order.status !== 'cancelled') {
+        dates[dateKey] = (dates[dateKey] || 0) + order.total;
+      }
+    });
+
+    return last30Days.map(date => {
+      const parts = (date || "").split('/');
+      return {
+        name: parts.length >= 2 ? `${parts[0]}/${parts[1]}` : date, 
+        revenue: dates[date] || 0
+      }
+    });
+  }, [orders]);
 
   const filteredProducts = products.filter(product => {
     return product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) || 
@@ -511,6 +538,26 @@ export default function DashboardPage() {
               <StatCard icon={Package} title="Products" value={totalProducts} subtitle="In catalog" bgColor="bg-gradient-to-br from-purple-100 to-purple-50" />
               <StatCard icon={Users} title="Customers" value={new Set(orders.map(o => o.userId)).size} subtitle="Unique buyers" bgColor="bg-gradient-to-br from-orange-100 to-orange-50" />
             </div>
+
+            {/* Revenue Chart */}
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6 mb-8 border border-gray-100 dark:border-gray-800">
+              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">Revenue Overview (Last 30 Days)</h3>
+              <div className="h-72 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.1} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dy={10} minTickGap={30} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} tickFormatter={(value: number) => `₦${(value/1000)}k`} dx={-10} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+                      formatter={(value: any) => [`₦${Number(value || 0).toLocaleString()}`, 'Revenue']}
+                    />
+                    <Line type="monotone" dataKey="revenue" stroke="#3B82F6" strokeWidth={4} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 8}} animationDuration={1500} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-800">Recent Orders</h3>

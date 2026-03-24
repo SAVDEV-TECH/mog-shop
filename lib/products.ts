@@ -77,6 +77,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   if (snapshot.empty) return null;
 
   const doc = snapshot.docs[0];
+  if (!doc) return null;
   const data = doc.data();
   const createdAtVal = data['createdAt'];
 

@@ -29,6 +29,7 @@ function ProdPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortOption, setSortOption] = useState<string>("");
+  const [priceRange, setPriceRange] = useState<number>(1000000);
   
   const { dispatch, setIsCartOpen } = useCart();
   const { dispatch: wishlistDispatch, isInWishlist } = useWishlist();
@@ -133,7 +134,8 @@ function ProdPage() {
     const matchesCategory = selectedCategory ? product.category === selectedCategory : true;
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (product.category?.toLowerCase() || "").includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    const matchesPrice = product.price <= priceRange;
+    return matchesCategory && matchesSearch && matchesPrice;
   });
 
   if (sortOption === "low-price") {
@@ -209,6 +211,23 @@ function ProdPage() {
                 </li>
               ))}
             </ul>
+
+            <div className="mt-6 mb-2 font-bold text-gray-900 dark:text-gray-100">Max Price: ₦{priceRange.toLocaleString()}</div>
+            <div className="px-2 w-full md:w-[90%]">
+              <input 
+                type="range" 
+                min="0" 
+                max="1000000" 
+                step="5000"
+                value={priceRange} 
+                onChange={(e) => setPriceRange(Number(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-mog"
+              />
+              <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+                <span>₦0</span>
+                <span>₦1m+</span>
+              </div>
+            </div>
           </div>
         )}
 
