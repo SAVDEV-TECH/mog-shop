@@ -12,8 +12,6 @@ import {
   Mail, 
   Phone, 
   MapPin, 
-  City, 
-  Globe, 
   ArrowRight, 
   ChevronLeft,
   Truck,
@@ -68,7 +66,13 @@ export default function OrderPage() {
       return;
     }
 
-    sessionStorage.setItem("customerInfo", JSON.stringify(customerInfo));
+    // ✅ Save userId and userEmail alongside customer info
+    sessionStorage.setItem("customerInfo", JSON.stringify({
+      ...customerInfo,
+      userId: user?.uid,
+      userEmail: user?.email,
+    }));
+
     router.push("/payment");
   };
 
@@ -117,6 +121,7 @@ export default function OrderPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           <div className="lg:col-span-12">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+
               {/* Form Section */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
@@ -290,6 +295,7 @@ export default function OrderPage() {
                   </div>
                 </div>
               </motion.div>
+
             </div>
           </div>
         </div>
@@ -297,4 +303,3 @@ export default function OrderPage() {
     </div>
   );
 }
-

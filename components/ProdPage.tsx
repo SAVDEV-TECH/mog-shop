@@ -10,14 +10,6 @@ import toast from "react-hot-toast";
 import { Heart } from "lucide-react";
 
 
-const store = [
-  { text: "Beef" },
-  { text: "Cat Food" },
-  { text: "Apple" },
-  { text: "Nail Polish" },
-  { text: "Cucumber" },
-  { text: "Cooking Oil" },
-];
 
 interface ProductsParam {
   id: string;
@@ -36,8 +28,9 @@ function ProdPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [sortOption, setSortOption] = useState<string>("");
   
-  const { dispatch } = useCart();
+  const { dispatch, setIsCartOpen } = useCart();
   const { dispatch: wishlistDispatch, isInWishlist } = useWishlist();
   const router = useRouter();
   
@@ -106,6 +99,7 @@ function ProdPage() {
         slug: product.slug,
       },
     });
+    setIsCartOpen(true);
     toast.success(`${product.name} added to cart!`);
   };
 
@@ -135,16 +129,26 @@ function ProdPage() {
   };
 
   // Filter products by category and search query
-  const filteredProducts = products.filter(product => {
+  let filteredProducts = products.filter(product => {
     const matchesCategory = selectedCategory ? product.category === selectedCategory : true;
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (product.category?.toLowerCase() || "").includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
+  if (sortOption === "low-price") {
+    filteredProducts.sort((a, b) => a.price - b.price);
+  } else if (sortOption === "high-price") {
+    filteredProducts.sort((a, b) => b.price - a.price);
+  } else if (sortOption === "a-z") {
+    filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
+  } else if (sortOption === "z-a") {
+    filteredProducts.sort((a, b) => b.name.localeCompare(a.name));
+  }
+
   return (
     <div id="shop-section">
-      <ProductGarage setSlidetoleft={setSlidetoleft} slidetoleft={slidetoleft} />
+      <ProductGarage setSlidetoleft={setSlidetoleft} slidetoleft={slidetoleft} sortOption={sortOption} setSortOption={setSortOption} />
 
       {/* Back Button - Sticky at top */}
       <div className="sticky top-0 z-20 bg-white dark:bg-[#0a0a0a] shadow-sm dark:shadow-black border-b border-transparent dark:border-gray-800">
@@ -202,17 +206,6 @@ function ProdPage() {
                   >
                     {category.charAt(0).toUpperCase() + category.slice(1)}
                   </button>
-                </li>
-              ))}
-            </ul>
-            
-            <div className="mt-6 mb-2 font-bold text-gray-900 dark:text-gray-100">Popular</div>
-            <ul className="flex flex-row gap-2 md:flex-col w-full">
-              {store.map((prod, i) => (
-                <li key={i}>
-                  <Link className="text-[10px] md:text-[14px] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100" href="/">
-                    {prod.text}
-                  </Link>
                 </li>
               ))}
             </ul>

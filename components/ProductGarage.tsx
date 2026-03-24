@@ -5,9 +5,11 @@ import React  from "react";
 interface ProductGarageProps {
   setSlidetoleft: React.Dispatch<React.SetStateAction<boolean>>;
   slidetoleft: boolean;
+  sortOption?: string;
+  setSortOption?: React.Dispatch<React.SetStateAction<string>>;
 }
 
-function ProductGarage({ setSlidetoleft, slidetoleft}: ProductGarageProps) {
+function ProductGarage({ setSlidetoleft, slidetoleft, sortOption, setSortOption }: ProductGarageProps) {
   const handleshow = () => {
     setSlidetoleft(prev => !prev);
   };
@@ -22,13 +24,16 @@ function ProductGarage({ setSlidetoleft, slidetoleft}: ProductGarageProps) {
         </div>
 
         <select
+          value={sortOption || ""}
+          onChange={(e) => setSortOption && setSortOption(e.target.value)}
           title="sortproduct"
-          className="border px-2 py-1 rounded-md"
+          className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-1.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
         >
-          <option value="">Sort</option>
-          <option value="a-z">A-Z</option>
-          <option value="z-a">Z-A</option>
-          <option value="low price">Low Price</option>
+          <option value="">Sort by: Recommended</option>
+          <option value="low-price">Price: Low to High</option>
+          <option value="high-price">Price: High to Low</option>
+          <option value="a-z">Alphabetical: A-Z</option>
+          <option value="z-a">Alphabetical: Z-A</option>
         </select>
       </div>
     </div>

@@ -3,23 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Mail, 
-  Lock, 
-  User, 
-  X, 
-  ArrowRight, 
-  Github, 
-  Chrome, 
-  ShieldCheck, 
-  KeyRound,
-  Calendar,
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
+import {
+  Mail,
+  Lock,
+  User,
+  ArrowRight,
+  Github,
+  Chrome,
   ChevronLeft
 } from 'lucide-react';
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   updateProfile,
   signInWithPopup,
   GoogleAuthProvider,
@@ -117,7 +113,7 @@ export default function MogShopAuth() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
     exit: { opacity: 0, y: -20, transition: { duration: 0.3 } }
@@ -132,7 +128,7 @@ export default function MogShopAuth() {
 
       <div className="w-full max-w-xl relative z-10 flex flex-col items-center">
         {/* Logo Section */}
-        <motion.div 
+        <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.8, type: "spring" }}
@@ -244,7 +240,7 @@ export default function MogShopAuth() {
                       <input type="checkbox" className="w-4 h-4 rounded bg-white/10 border-white/20 text-blue-600 focus:ring-blue-500 focus:ring-offset-0" />
                       <span className="text-xs text-gray-400 group-hover:text-white transition-colors">Keep me signed in</span>
                     </label>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setMode('forgot-password')}
                       className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors"
@@ -324,7 +320,7 @@ export default function MogShopAuth() {
         </motion.div>
 
         {/* Footer info */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}

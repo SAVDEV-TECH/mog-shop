@@ -28,6 +28,8 @@ const CartContext = createContext<{
   state: CartState;
   dispatch: React.Dispatch<CartAction>;
   total: number;
+  isCartOpen: boolean;
+  setIsCartOpen: React.Dispatch<React.SetStateAction<boolean>>;
 } | null>(null);
 
 const initialState: CartState = {
@@ -104,6 +106,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   // Use a temporary state initially for SSR matching
   const [state, dispatch] = useReducer(cartReducer, initialState);
+  const [isCartOpen, setIsCartOpen] = React.useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -138,7 +141,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   return (
-    <CartContext.Provider value={{ state, dispatch, total }}>
+    <CartContext.Provider value={{ state, dispatch, total, isCartOpen, setIsCartOpen }}>
       {children}
     </CartContext.Provider>
   );

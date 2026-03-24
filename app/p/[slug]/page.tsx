@@ -19,16 +19,27 @@ export async function generateStaticParams() {
 
 // ✅ Page component
 export default async function Page({ params }: PageProps) {
+  let slug: string | undefined;
+  let product: any;
+
   try {
-    const { slug } = await params;
-    if (!slug) notFound();
+    const resolvedParams = await params;
+    slug = resolvedParams.slug;
+  } catch (err) {
+    console.error("Params error:", err);
+    notFound();
+  }
 
-    const product = await getProductBySlug(slug);
-    if (!product) notFound();
+  if (!slug) notFound(); // ✅ outside try/catch
 
-    return <ProductDetailpage product={product as any} />;
+  try {
+    product = await getProductBySlug(slug!);
   } catch (err) {
     console.error("Fetch error:", err);
     notFound();
   }
+
+  if (!product) notFound(); // ✅ outside try/catch
+
+  return <ProductDetailpage product={product as any} />;
 }

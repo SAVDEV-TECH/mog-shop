@@ -8,6 +8,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { Toaster } from "react-hot-toast";
 import PageWrapper from "@/components/PageWrapper";
+import CartDrawer from "@/components/CartDrawer";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -47,6 +48,7 @@ export default function RootLayout({
             <WishlistProvider>
               <CartProvider> 
                 <Header />
+                <CartDrawer />
                 <PageWrapper>
                   {children}
                 </PageWrapper>

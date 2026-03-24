@@ -13,6 +13,7 @@ interface Product {
   rating?: number;
   category: string;
   imageUrl: string;
+  slug: string;
 }
 
 export default function ProductDetailPage() {

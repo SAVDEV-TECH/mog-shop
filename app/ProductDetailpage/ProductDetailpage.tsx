@@ -4,14 +4,14 @@ import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  ShoppingCart, 
-  Heart, 
-  Star, 
-  ChevronRight, 
-  BadgeCheck, 
-  Truck, 
-  ShieldCheck, 
+import {
+  ShoppingCart,
+  Heart,
+  Star,
+  ChevronRight,
+  BadgeCheck,
+  Truck,
+  ShieldCheck,
   RefreshCcw,
   Minus,
   Plus
@@ -19,6 +19,19 @@ import {
 import { useState } from "react";
 import toast from "react-hot-toast";
 
+// interface Product {
+//   id: string;
+//   name: string;
+//   price: number;
+//   rating?: number;
+//   category: string;
+//   imageUrl: string;
+//   slug: string;
+//   description?: string;
+//   stock?: number;
+// }
+
+// ✅ Add this interface
 interface Product {
   id: string;
   name: string;
@@ -36,7 +49,7 @@ interface ProductDetailsPageProps {
 }
 
 export default function ProductDetailsPage({ product }: ProductDetailsPageProps) {
-  const { dispatch } = useCart();
+  const { dispatch, setIsCartOpen } = useCart();
   const { state: { items: wishlistItems }, dispatch: wishlistDispatch } = useWishlist();
   const [quantity, setQuantity] = useState(1);
   const [isHovering, setIsHovering] = useState(false);
@@ -67,6 +80,7 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
         slug: product.slug,
       },
     });
+    setIsCartOpen(true);
     toast.success(`Success! ${quantity} ${product.name} added to cart`, {
       icon: "🎉",
       style: {
@@ -78,17 +92,17 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
   };
 
   const toggleWishlist = () => {
-    wishlistDispatch({ 
-      type: 'TOGGLE_ITEM', 
+    wishlistDispatch({
+      type: 'TOGGLE_ITEM',
       item: {
         id: product.id,
         name: product.name,
         price: product.price,
         images: productImage,
         slug: product.slug
-      } 
+      }
     });
-    
+
     if (isWishlisted) {
       toast.error("Removed from favourites");
     } else {
@@ -113,13 +127,13 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
           {/* Left: Image Section */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
             className="space-y-4"
           >
-            <div 
+            <div
               className="relative aspect-square lg:aspect-[4/5] rounded-3xl bg-white dark:bg-gray-900 overflow-hidden shadow-2xl border border-gray-100 dark:border-gray-800"
               onMouseEnter={() => setIsHovering(true)}
               onMouseLeave={() => setIsHovering(false)}
@@ -132,7 +146,7 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
                 className={`object-contain p-4 transition-transform duration-700 ease-out ${isHovering ? 'scale-110' : 'scale-100'}`}
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
-              
+
               {/* Floating Action Badge */}
               <div className="absolute top-6 left-6">
                 <span className="px-3 py-1 bg-mog/10 backdrop-blur-md text-mog text-xs font-bold rounded-full uppercase tracking-wider border border-mog/20">
@@ -141,13 +155,12 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
               </div>
 
               {/* Wishlist Button */}
-              <button 
+              <button
                 onClick={toggleWishlist}
-                className={`absolute top-6 right-6 p-3 rounded-full shadow-lg transition-all duration-300 ${
-                  isWishlisted 
-                  ? 'bg-red-500 text-white scale-110' 
+                className={`absolute top-6 right-6 p-3 rounded-full shadow-lg transition-all duration-300 ${isWishlisted
+                  ? 'bg-red-500 text-white scale-110'
                   : 'bg-white/80 dark:bg-gray-800/80 text-gray-600 dark:text-gray-300 hover:bg-red-50 hover:text-red-500 backdrop-blur-md'
-                }`}
+                  }`}
                 aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
               >
                 <Heart size={20} fill={isWishlisted ? "currentColor" : "none"} />
@@ -165,7 +178,7 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
           </motion.div>
 
           {/* Right: Product Details Section */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
@@ -228,7 +241,7 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
 
             {/* Action Buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-              <button 
+              <button
                 onClick={handleAddToCart}
                 className="group flex items-center justify-center gap-3 bg-mog text-white px-8 py-5 rounded-2xl font-bold text-lg hover:bg-mog/90 shadow-xl shadow-mog/20 transition-all duration-300 transform active:scale-95"
               >
@@ -293,4 +306,4 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
       </div>
     </div>
   );
-}
+}

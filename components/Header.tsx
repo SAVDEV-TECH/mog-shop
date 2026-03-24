@@ -50,7 +50,7 @@ export default function Header() {
   }
    
   return (
-    <nav className='sticky top-0 z-50 bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 transition-colors'>
+    <nav className='fixed top-0 left-0 w-full z-50 bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 transition-colors'>
       <div className='flex w-full px-4 sm:px-6 md:px-8 lg:px-14 h-[60px] md:h-[70px] gap-2 sm:gap-4 md:gap-9 items-center justify-between'>
         {/* Logo */}
         <div className='flex-shrink-0'> 

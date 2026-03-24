@@ -25,6 +25,7 @@ const Search: React.FC<SearchProps> = ({ isOpen, isClose }) => {
     const [allProducts, setAllProducts] = useState<Product[]>([]);
     const [loading, setloading] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
+    const [popularSearches, setPopularSearches] = useState<string[]>([]);
 
     // Fetch all products once when component mounts
     useEffect(() => {
@@ -33,6 +34,9 @@ const Search: React.FC<SearchProps> = ({ isOpen, isClose }) => {
                 const response = await fetch('/api/products');
                 const data = await response.json();
                 setAllProducts(data);
+                
+                const categories = Array.from(new Set(data.map((p: any) => p.category))).filter((c): c is string => typeof c === 'string' && c.trim() !== '');
+                setPopularSearches(categories.slice(0, 8));
             } catch (error) {
                 console.log('Error fetching products:', error);
             }
@@ -85,25 +89,11 @@ const Search: React.FC<SearchProps> = ({ isOpen, isClose }) => {
                 <div className="fixed left-0 top-0 w-full z-10">
                     <div
                         ref={searchRef}
-                        className="w-full h-[50vh] py-1 overflow-y-scroll px-10 bg-white"
+                        className="w-full h-[50vh] overflow-y-scroll px-10 bg-white"
                     >
-                        <div className="flex items-center gap-7 justify-between">
-                            <div className='hidden md:flex'>
-                                <svg
-                                    aria-hidden="true"
-                                    viewBox="0 0 24 24"
-                                    role="img"
-                                    width="74px"
-                                    height="74px"
-                                    fill="none"
-                                >
-                                    <path
-                                        fill="currentColor"
-                                        fillRule="evenodd"
-                                        d="M21 8.719L7.836 14.303C6.74 14.768 5.818 15 5.075 15c-.836 0-1.445-.295-1.819-.884-.485-.76-.273-1.982.559-3.272.494-.754 1.122-1.446 1.734-2.108-.144.234-1.415 2.349-.025 3.345.275.2.666.298 1.147.298.386 0 .829-.063 1.316-.19L21 8.719z"
-                                        clipRule="evenodd"
-                                    ></path>
-                                </svg>
+                        <div className="flex items-center gap-7 justify-between sticky top-0 bg-white z-20 py-4 border-b">
+                            <div className='hidden md:flex flex-shrink-0'>
+                                <Image src="/mog.png" alt="Mogshop logo" width={64} height={64} className="object-contain" />
                             </div>
                             <div className="flex gap-4 bg-[#e5e5e5] group transition-all ease-linear hover:bg-slate-300 h-max w-[680px] rounded-[30px] items-center">
                                 <div className="px-[7px] rounded-full py-[7px] bg-[#e5e5e5]">
@@ -136,7 +126,7 @@ const Search: React.FC<SearchProps> = ({ isOpen, isClose }) => {
                             {result.map((item) => (
                                 <Link
                                     key={item.id}
-                                    href={`/productspage/${item.id}`}
+                                    href={`/ProductDetailpage/${item.id}`}
                                     className="p-2 flex items-center gap-4 border-b cursor-pointer hover:bg-gray-100"
                                     onClick={() => isClose()}
                                 >
@@ -157,18 +147,21 @@ const Search: React.FC<SearchProps> = ({ isOpen, isClose }) => {
                             ))}
                         </ul>
 
-                        <div className="flex flex-col text-nowrap w-full md:w-[50%] mt-4 mx-auto">
-                            <span className="grid my-2 font-bold">Popular search</span>
-                            <div className="transform grid gap-2 text-[14px] grid-cols-4 md:grid-cols-6">
-                                {["home", "air max", "jordan", "Drunks", "Drunks", "jordan", "Drunks", "Drunks"].map(
+                        <div className="flex flex-col text-nowrap w-full md:w-[70%] mt-8 mx-auto pb-4">
+                            <span className="grid my-2 font-bold text-gray-700">Popular Categories</span>
+                            <div className="flex flex-wrap gap-3 text-[14px]">
+                                {popularSearches.length > 0 ? popularSearches.map(
                                     (item, index) => (
                                         <span
                                             key={index}
-                                            className="px-4 w-max text-center py-2 rounded text-black bg-[#e5e5e5]"
+                                            onClick={() => setsearchquery(item)}
+                                            className="px-4 py-2 rounded-full font-medium text-gray-700 bg-[#f0f0f0] cursor-pointer hover:bg-gray-800 hover:text-white transition-colors"
                                         >
                                             {item}
                                         </span>
                                     )
+                                ) : (
+                                    <span className="text-gray-500 text-sm italic">Loading categories...</span>
                                 )}
                             </div>
                         </div>

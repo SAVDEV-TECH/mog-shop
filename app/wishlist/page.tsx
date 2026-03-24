@@ -10,7 +10,7 @@ import BackButton from "@/components/BackButton";
 
 export default function WishlistPage() {
   const { state, dispatch: wishlistDispatch } = useWishlist();
-  const { dispatch: cartDispatch } = useCart();
+  const { dispatch: cartDispatch, setIsCartOpen } = useCart();
 
   const handleRemove = (id: string, name: string) => {
     wishlistDispatch({ type: "REMOVE_ITEM", id });
@@ -29,6 +29,7 @@ export default function WishlistPage() {
         slug: item.slug,
       },
     });
+    setIsCartOpen(true);
     toast.success(`${item.name} added to cart!`);
   };
 
