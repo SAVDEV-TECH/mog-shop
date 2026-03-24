@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import ProductReviews from "@/components/ProductReviews";
 
 // interface Product {
 //   id: string;
@@ -53,6 +54,7 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
   const { state: { items: wishlistItems }, dispatch: wishlistDispatch } = useWishlist();
   const [quantity, setQuantity] = useState(1);
   const [isHovering, setIsHovering] = useState(false);
+  const [activeTab, setActiveTab] = useState<'desc' | 'specs' | 'reviews'>('reviews');
 
   if (!product) {
     return (
@@ -280,28 +282,69 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
           </motion.div>
         </div>
 
-        {/* Product Tabs / Extra Info (Mockup) */}
         <div className="mt-20">
-          <div className="border-b border-gray-200 dark:border-gray-800">
+          <div className="border-b border-gray-200 dark:border-gray-800 mb-8">
             <nav className="flex gap-8">
-              <button className="px-1 py-4 text-sm font-bold text-mog border-b-2 border-mog">Description</button>
-              <button className="px-1 py-4 text-sm font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">Specifications</button>
-              <button className="px-1 py-4 text-sm font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">Reviews (12)</button>
+              <button 
+                onClick={() => setActiveTab('desc')}
+                className={`px-1 py-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'desc' ? 'text-mog border-mog' : 'text-gray-500 border-transparent hover:text-gray-900 dark:hover:text-white'}`}
+              >
+                Description
+              </button>
+              <button 
+                onClick={() => setActiveTab('specs')}
+                className={`px-1 py-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'specs' ? 'text-mog border-mog' : 'text-gray-500 border-transparent hover:text-gray-900 dark:hover:text-white'}`}
+              >
+                Specifications
+              </button>
+              <button 
+                onClick={() => setActiveTab('reviews')}
+                className={`px-1 py-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'reviews' ? 'text-mog border-mog' : 'text-gray-500 border-transparent hover:text-gray-900 dark:hover:text-white'}`}
+              >
+                Feedback & Reviews
+              </button>
             </nav>
           </div>
-          <div className="py-8 prose dark:prose-invert max-w-none">
-            <p className="text-gray-600 dark:text-gray-400">
-              Elevate your lifestyle with our premium {product.name}. Crafted with precision and attention to detail, this piece represents the pinnacle of modern design. Whether you're looking for performance, style, or reliability, this product delivers on all fronts.
-            </p>
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 list-none p-0">
-              {['Premium Quality Material', 'Modern Ergonomic Design', 'Vibrant Long-lasting Finish', 'Optimized for Performance'].map((feat, i) => (
-                <li key={i} className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                  <div className="w-1.5 h-1.5 rounded-full bg-mog" />
-                  {feat}
-                </li>
-              ))}
-            </ul>
-          </div>
+          
+          {activeTab === 'desc' && (
+            <div className="py-2 prose dark:prose-invert max-w-none animate-in fade-in">
+              <p className="text-gray-600 dark:text-gray-400">
+                Elevate your lifestyle with our premium {product.name}. Crafted with precision and attention to detail, this piece represents the pinnacle of modern design. Whether you're looking for performance, style, or reliability, this product delivers on all fronts.
+              </p>
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 list-none p-0">
+                {['Premium Quality Material', 'Modern Ergonomic Design', 'Vibrant Long-lasting Finish', 'Optimized for Performance'].map((feat, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="w-1.5 h-1.5 rounded-full bg-mog" />
+                    {feat}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {activeTab === 'specs' && (
+            <div className="py-2 animate-in fade-in">
+              <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl overflow-hidden max-w-2xl">
+                <div className="grid grid-cols-2 border-b border-gray-100 dark:border-gray-800">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800/50 text-gray-500 font-bold text-sm uppercase">Category</div>
+                  <div className="p-4 font-medium text-gray-900 dark:text-white capitalize">{product.category}</div>
+                </div>
+                <div className="grid grid-cols-2 border-b border-gray-100 dark:border-gray-800">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800/50 text-gray-500 font-bold text-sm uppercase">Availability</div>
+                  <div className="p-4 font-medium text-green-600 dark:text-green-500">In Stock</div>
+                </div>
+                <div className="grid grid-cols-2">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800/50 text-gray-500 font-bold text-sm uppercase">Shipping</div>
+                  <div className="p-4 font-medium text-gray-900 dark:text-white">Ships in 24 hours</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'reviews' && (
+            <ProductReviews productId={product.id} />
+          )}
+
         </div>
       </div>
     </div>

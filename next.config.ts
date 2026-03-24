@@ -19,6 +19,11 @@ const nextConfig = {
         protocol: "https",
         hostname: "cdn.dummyjson.com",
       },
+      {
+        protocol: "https",
+        hostname: "firebasestorage.googleapis.com", // ✅ added
+        pathname: "/**",
+      },
     ],
     minimumCacheTTL: 60,
     unoptimized: true,

@@ -225,6 +225,54 @@ export async function POST(request: NextRequest) {
       console.log('ℹ️ CallMeBot credentials not set. Skipping WhatsApp notification.');
     }
 
+    // ── Telegram Notification (admin only) ──
+    const tgBotToken = process.env['NEXT_PUBLIC_TELEGRAM_BOT_TOKEN'];
+    const tgChatId = process.env['NEXT_PUBLIC_TELEGRAM_CHAT_ID'];
+
+    if (tgBotToken && tgChatId) {
+      try {
+        const customerName = orderDetails.customerInfo?.fullName || orderDetails.customerName || 'Customer';
+        const customerPhone = orderDetails.customerInfo?.phone || orderDetails.phone || 'N/A';
+        const paymentMethod = orderDetails.paymentMethod === 'payment-on-delivery' ? 'Cash on Delivery' : 'Digital Payment';
+        const totalAmount = Number(orderDetails.total).toLocaleString();
+        
+        const itemsListTg = orderDetails.items?.map((item: any) => `- ${item.quantity}x ${item.name} (₦${Number(item.price).toLocaleString()})`).join('\n') || 'No items listed';
+
+        const text = `🛍️ *New Order Received!*\n\n*Order ID:* \`${orderDetails.id}\`\n*Customer:* ${customerName}\n*Phone:* ${customerPhone}\n*Method:* ${paymentMethod}\n*Total:* ₦${totalAmount}\n\n📦 *Items Ordered:*\n${itemsListTg}`;
+        
+        const firstItemImage = orderDetails.items?.[0]?.image;
+        let tgEndpoint = 'sendMessage';
+        let bodyPayload: any = {
+          chat_id: tgChatId,
+          parse_mode: 'Markdown'
+        };
+
+        if (firstItemImage && firstItemImage.startsWith('http')) {
+          tgEndpoint = 'sendPhoto';
+          bodyPayload.photo = firstItemImage;
+          bodyPayload.caption = text;
+        } else {
+          bodyPayload.text = text;
+        }
+        
+        const tgResponse = await fetch(`https://api.telegram.org/bot${tgBotToken}/${tgEndpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyPayload)
+        });
+        
+        if (tgResponse.ok) {
+          console.log('✅ Telegram notification sent successfully!');
+        } else {
+          console.warn('⚠️ Telegram notification failed:', await tgResponse.text());
+        }
+      } catch (tgError) {
+        console.error('❌ Telegram notification error:', tgError);
+      }
+    } else {
+      console.log('ℹ️ Telegram credentials not set. Skipping Telegram notification.');
+    }
+
     return Response.json({ success: true, message: 'Notifications sent successfully' });
   } catch (error) {
     console.error('Email error:', error);
