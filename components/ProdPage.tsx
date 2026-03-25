@@ -191,19 +191,19 @@ function ProdPage() {
             </h2>
             
             <div className="mt-4 mb-2 font-bold text-gray-900 dark:text-gray-100">Categories</div>
-            <ul className="flex flex-row gap-2 md:flex-col w-full">
-              <li>
+            <ul className="flex flex-row overflow-x-auto gap-2 md:flex-col w-full pb-2 md:overflow-visible [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <li className="shrink-0">
                 <button 
-                  className={`text-[10px] md:text-[14px] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 ${selectedCategory === null ? 'font-bold text-blue-600 dark:!text-blue-400' : ''}`}
+                  className={`text-[12px] md:text-[14px] px-3 py-1.5 md:px-0 md:py-0 md:w-full md:text-left rounded-full md:rounded-none border md:border-none border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors ${selectedCategory === null ? 'bg-gray-100 dark:bg-gray-800 md:bg-transparent md:dark:bg-transparent font-bold text-blue-600 dark:!text-blue-400' : ''}`}
                   onClick={() => setSelectedCategory(null)}
                 >
                   All Products
                 </button>
               </li>
               {categories.map((category, i) => (
-                <li key={i}>
+                <li key={i} className="shrink-0">
                   <button 
-                    className={`text-[10px] md:text-[14px] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 ${selectedCategory === category ? 'font-bold text-blue-600 dark:!text-blue-400' : ''}`}
+                    className={`text-[12px] md:text-[14px] px-3 py-1.5 md:px-0 md:py-0 md:w-full md:text-left rounded-full md:rounded-none border md:border-none border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors ${selectedCategory === category ? 'bg-gray-100 dark:bg-gray-800 md:bg-transparent md:dark:bg-transparent font-bold text-blue-600 dark:!text-blue-400' : ''}`}
                     onClick={() => setSelectedCategory(category)}
                   >
                     {category.charAt(0).toUpperCase() + category.slice(1)}

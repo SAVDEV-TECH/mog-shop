@@ -20,6 +20,7 @@ const item_navbar = [
   { name: 'home', path: '/' },
   { name: 'shop', path: '/#shop-section' },
   { name: 'wishlist', path: '/wishlist' },
+  { name: 'get app', path: '/download-app' },
 ]
 
 export default function Header() {
