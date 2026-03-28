@@ -1,8 +1,21 @@
  import nodemailer from 'nodemailer';
 import { NextRequest } from 'next/server';
 
+import { verifyAdminToken } from '@/lib/adminAuthServer';
+
 export async function POST(request: NextRequest) {
   try {
+    // Check authorization
+    const authHeader = request.headers.get('Authorization');
+    const idToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+    
+    const isAuthorized = await verifyAdminToken(idToken);
+    
+    if (!isAuthorized) {
+      console.warn("Unauthorized attempt to access notification API");
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { orderDetails, userEmail } = await request.json();
 
     // Check if email credentials are configured
@@ -226,8 +239,8 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Telegram Notification (admin only) ──
-    const tgBotToken = process.env['NEXT_PUBLIC_TELEGRAM_BOT_TOKEN'];
-    const tgChatId = process.env['NEXT_PUBLIC_TELEGRAM_CHAT_ID'];
+    const tgBotToken = process.env['TELEGRAM_BOT_TOKEN'];
+    const tgChatId = process.env['TELEGRAM_CHAT_ID'];
 
     if (tgBotToken && tgChatId) {
       try {

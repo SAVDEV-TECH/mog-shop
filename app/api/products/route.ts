@@ -40,9 +40,23 @@ function generateSlug(name: string) {
     .replace(/^-+|-+$/g, '');
 }
 
+import { verifyAdminToken } from '@/lib/adminAuthServer';
+
 // === Create product (POST) ===
 export async function POST(req: Request) {
   try {
+    // Check authorization
+    const authHeader = req.headers.get('Authorization');
+    const idToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+    
+    const isAuthorized = await verifyAdminToken(idToken);
+    
+    if (!isAuthorized) {
+      return NextResponse.json({ 
+        error: "Unauthorized: Admin access required" 
+      }, { status: 401 });
+    }
+
     const body = await req.json();
     const { name, price, category, imageUrl } = body;
 

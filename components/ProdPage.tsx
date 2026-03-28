@@ -1,11 +1,11 @@
 "use client";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import ProductGarage from "./ProductGarage";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { Heart } from "lucide-react";
 
@@ -20,7 +20,7 @@ interface ProductsParam {
   slug: string;
 }
 
-function ProdPage() {
+function ProdPageContent() {
   const [slidetoleft, setSlidetoleft] = useState(true);
   const [isMobile, setisMobile] = useState(false);
   const [products, setProducts] = useState<ProductsParam[]>([]);
@@ -34,8 +34,17 @@ function ProdPage() {
   const { dispatch, setIsCartOpen } = useCart();
   const { dispatch: wishlistDispatch, isInWishlist } = useWishlist();
   const router = useRouter();
+  const searchParams = useSearchParams();
   
   const [categories, setCategories] = useState<string[]>([]);
+
+  // Sync with URL params
+  useEffect(() => {
+    const cat = searchParams.get('category');
+    if (cat) {
+      setSelectedCategory(cat);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     async function fetchproduct() {
@@ -373,6 +382,14 @@ function ProdPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function ProdPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-20">Loading products...</div>}>
+      <ProdPageContent />
+    </Suspense>
   );
 }
 

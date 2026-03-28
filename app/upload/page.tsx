@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useAuth } from "@/context/AuthContext";
 
 
 export default function UploadPage() {
+  const { user } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -18,6 +20,8 @@ export default function UploadPage() {
 
     setLoading(true);
     try {
+      const idToken = await user?.getIdToken();
+
       // 1. Post the file and metadata to our server upload endpoint (/api/upload)
       const formData = new FormData();
       formData.append("file", file);
@@ -27,6 +31,9 @@ export default function UploadPage() {
 
       const uploadRes = await fetch("/api/upload", {
         method: "POST",
+        headers: {
+          'Authorization': `Bearer ${idToken}`
+        },
         body: formData,
       });
 
@@ -38,7 +45,10 @@ export default function UploadPage() {
       if (!uploadJson.product) {
         const res = await fetch("/api/products", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${idToken}`
+          },
           body: JSON.stringify({
             name,
             price: Number(price),

@@ -88,10 +88,15 @@ export default function PaymentPage() {
 
       const docRef = await addDoc(collection(db, "orders"), orderData);
       
+      const idToken = await user?.getIdToken();
+      
       // Send email notification (Background)
       fetch('/api/send-notification', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({
           orderDetails: { ...orderData, id: docRef.id },
           userEmail: customerInfo?.email || user?.email,
