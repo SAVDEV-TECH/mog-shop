@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from '@/context/CartContext';
 import { X, ShoppingBag, Trash2 } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 
 export default function CartDrawer() {
   const { state: { items }, isCartOpen, setIsCartOpen, dispatch, total } = useCart();
@@ -53,11 +54,11 @@ export default function CartDrawer() {
               <div key={item.id} className="flex gap-4 border-b border-gray-100 dark:border-gray-800 pb-4">
                 <div className="w-20 h-20 bg-gray-50 dark:bg-gray-900 rounded-lg overflow-hidden shrink-0 border border-gray-100 dark:border-gray-800">
                   <Image 
-                    src={item.images || "/globe.svg"} 
+                    src={(item.wholesaleImageUrl && item.minWholesaleQty && item.quantity >= item.minWholesaleQty ? item.wholesaleImageUrl : (item.images || "/globe.svg"))} 
                     alt={item.name} 
                     width={80} 
                     height={80} 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain p-1"
                     unoptimized
                   />
                 </div>
@@ -72,7 +73,16 @@ export default function CartDrawer() {
                         <Trash2 size={16} />
                       </button>
                     </div>
-                    <p className="font-bold text-sm mt-1">₦{item.price.toLocaleString()}</p>
+                    <div className="flex flex-col mt-1">
+                      <p className={`font-bold text-sm ${item.wholesalePrice && item.minWholesaleQty && item.quantity >= item.minWholesaleQty ? 'text-blue-600 dark:text-blue-400' : ''}`}>
+                        ₦{(item.wholesalePrice && item.minWholesaleQty && item.quantity >= item.minWholesaleQty ? item.wholesalePrice : item.price).toLocaleString()}
+                      </p>
+                      {item.wholesalePrice && item.minWholesaleQty && item.quantity >= item.minWholesaleQty && (
+                        <span className="text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold w-fit mt-0.5 uppercase tracking-tighter">
+                          Wholesale Price Applied
+                        </span>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="flex items-center gap-3 mt-2">
@@ -110,8 +120,19 @@ export default function CartDrawer() {
               onClick={() => setIsCartOpen(false)}
               className="w-full block text-center py-3 bg-black dark:bg-white text-white dark:text-black rounded-full font-semibold hover:opacity-90 transition-opacity mb-2"
             >
-              View Cart
+              Checkout Now
             </Link>
+            
+            <button 
+              onClick={() => {
+                const message = `Hello Mogshop! I'd like to order:\n${items.map(item => `- ${item.name} (${item.quantity}x)`).join('\n')}\n\nTotal: ₦${total.toLocaleString()}`;
+                window.open(`https://wa.me/2349037624245?text=${encodeURIComponent(message)}`, '_blank');
+              }}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-[#25D366] text-white rounded-full font-bold hover:bg-[#128C7E] transition-colors"
+            >
+              <FaWhatsapp size={20} />
+              Order via WhatsApp
+            </button>
           </div>
         )}
       </div>

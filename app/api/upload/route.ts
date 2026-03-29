@@ -55,8 +55,11 @@ export async function POST(req: Request) {
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
+    const wholesaleFile = formData.get("wholesaleFile") as File | null;
     const name = formData.get("name") as string | null;
     const price = formData.get("price") as string | null;
+    const wholesalePrice = formData.get("wholesalePrice") as string | null;
+    const minWholesaleQty = formData.get("minWholesaleQty") as string | null;
     const category = (formData.get("category") as string) || 'Uncategorized';
 
     // Validation
@@ -66,39 +69,44 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
 
-    // Validate price
+    // Validate prices
     const priceNumber = parseFloat(price);
+    const wholesalePriceNumber = wholesalePrice ? parseFloat(wholesalePrice) : null;
+    const minQtyNumber = minWholesaleQty ? parseInt(minWholesaleQty) : null;
+
     if (isNaN(priceNumber)) {
       return NextResponse.json({ 
         error: "Invalid price value" 
       }, { status: 400 });
     }
 
-    console.log("Uploading file to Cloudinary...");
+    console.log("Uploading main file to Cloudinary...");
 
-    // Convert file to buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    // Upload to Cloudinary
-    const uploadResult = await new Promise<CloudinaryUploadResult>((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { 
-          folder: "products",
-          resource_type: "auto"
-        },
-        (error, result) => {
-          if (error) {
-            console.error("Cloudinary upload error:", error);
-            reject(error);
-          } else {
-            console.log("Cloudinary upload successful:", result?.secure_url);
-            resolve(result as CloudinaryUploadResult);
+    // Helper for Cloudinary uploads
+    const uploadToCloudinary = async (fileToUpload: File) => {
+      const arrayBuffer = await fileToUpload.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      return new Promise<CloudinaryUploadResult>((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: "products", resource_type: "auto" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result as CloudinaryUploadResult);
           }
-        }
-      );
-      uploadStream.end(buffer);
-    });
+        );
+        uploadStream.end(buffer);
+      });
+    };
+
+    // Upload main image
+    const uploadResult = await uploadToCloudinary(file);
+    
+    // Upload wholesale image if provided
+    let wholesaleUploadResult = null;
+    if (wholesaleFile) {
+      console.log("Uploading wholesale file to Cloudinary...");
+      wholesaleUploadResult = await uploadToCloudinary(wholesaleFile);
+    }
 
     console.log("Saving product to Firestore...");
 
@@ -106,31 +114,29 @@ export async function POST(req: Request) {
     const productData = {
       name: String(name).trim(),
       price: priceNumber,
+      wholesalePrice: wholesalePriceNumber,
+      minWholesaleQty: minQtyNumber,
       category: String(category).trim(),
       imageUrl: uploadResult.secure_url,
-      publicId: uploadResult.public_id, // Store for potential deletion later
+      wholesaleImageUrl: wholesaleUploadResult?.secure_url || null,
+      publicId: uploadResult.public_id,
+      wholesalePublicId: wholesaleUploadResult?.public_id || null,
+      slug: name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, ''),
       createdAt: serverTimestamp(),
     };
 
     // Sanitize data before saving
     const sanitizedData = sanitizeData(productData);
 
-    console.log("Product data to save:", sanitizedData);
-
     // Save product info in Firestore
     if (!db) throw new Error("Database not initialized");
     const docRef = await addDoc(collection(db, "products"), sanitizedData);
-
-    console.log("Product saved successfully with ID:", docRef.id);
 
     return NextResponse.json({
       message: "Product uploaded successfully",
       product: {
         id: docRef.id,
-        name: sanitizedData['name'],
-        price: sanitizedData['price'],
-        category: sanitizedData['category'],
-        imageUrl: sanitizedData['imageUrl'],
+        ...sanitizedData
       },
     });
   } catch (err) {

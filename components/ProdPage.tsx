@@ -16,6 +16,8 @@ interface ProductsParam {
   imageUrl: string;
   name: string;
   price: number;
+  wholesalePrice?: number;
+  minWholesaleQty?: number;
   category?: string;
   slug: string;
 }
@@ -104,6 +106,8 @@ function ProdPageContent() {
         id: product.id,
         name: product.name,
         price: product.price,
+        wholesalePrice: product.wholesalePrice,
+        minWholesaleQty: product.minWholesaleQty,
         images: product.imageUrl,
         quantity: 1,
         slug: product.slug,
@@ -184,6 +188,26 @@ function ProdPageContent() {
             <span className="text-sm md:text-base">Back</span>
           </button>
         </div>
+      </div>
+
+      {/* Wholesale Banner */}
+      <div className="w-11/12 max-w-7xl mx-auto mt-6 mb-2">
+        <Link 
+          href="/quick-order"
+          className="group relative flex items-center justify-between p-6 bg-gradient-to-r from-blue-600 to-mog rounded-[2rem] overflow-hidden shadow-xl shadow-blue-500/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
+        >
+          <div className="relative z-10">
+            <h3 className="text-xl md:text-2xl font-black text-white mb-1">Restock Your Shop? 📦</h3>
+            <p className="text-blue-100/80 text-xs md:text-sm font-medium">Use our Quick-Order Form to refill your inventory in seconds.</p>
+          </div>
+          <div className="relative z-10 flex items-center gap-2 bg-white/20 backdrop-blur-md px-5 py-3 rounded-2xl text-white font-bold text-sm border border-white/20 group-hover:bg-white/30 transition-all">
+             Try Quick Restock <span>→</span>
+          </div>
+          
+          {/* Decorative background elements */}
+          <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-10 translate-y-1/2 w-48 h-48 bg-blue-400/20 rounded-full blur-2xl" />
+        </Link>
       </div>
 
       <div className="w-11/12 max-w-7xl flex flex-col relative p-3 md:flex-row mx-auto gap-6 justify-center">
@@ -346,7 +370,14 @@ function ProdPageContent() {
                       />
                     </div>
                       <div className="pl-2 mt-2 text-sm md:text-base font-medium truncate text-gray-900 dark:text-gray-100">{product.name}</div>
-                      <div className="pl-2 text-green-700 dark:text-green-500">#{product.price}</div>
+                      <div className="pl-2 flex flex-col">
+                        <div className="text-green-700 dark:text-green-500 font-bold">₦{product.price.toLocaleString()}</div>
+                        {product.wholesalePrice && (
+                          <div className="text-[10px] text-blue-600 dark:text-blue-400 font-bold">
+                            Bulk: ₦{product.wholesalePrice.toLocaleString()} ({product.minWholesaleQty}+)
+                          </div>
+                        )}
+                      </div>
                       <div className="pl-2 mt-1 text-xs text-gray-500 dark:text-gray-400">{product.category}</div>
                       
                       {/* Buttons */}

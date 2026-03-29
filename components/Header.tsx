@@ -19,6 +19,7 @@ import { isAdmin } from '@/lib/adminAuth'
 const item_navbar = [
   { name: 'home', path: '/' },
   { name: 'shop', path: '/#shop-section' },
+  { name: 'quick order', path: '/quick-order' },
   { name: 'wishlist', path: '/wishlist' },
   { name: 'get app', path: '/download-app' },
 ]

@@ -20,8 +20,11 @@ const Search: React.FC<SearchProps> = ({ isOpen, isClose }) => {
         name: string;
         imageUrl: string;
         price: number;
+        wholesalePrice?: number;
+        minWholesaleQty?: number;
         category?: string;
         slug: string;
+        wholesaleImageUrl?: string;
     }
 
     const [result, setresult] = useState<Product[]>([]);
@@ -95,6 +98,9 @@ const Search: React.FC<SearchProps> = ({ isOpen, isClose }) => {
             id: product.id,
             name: product.name,
             price: product.price,
+            wholesalePrice: product.wholesalePrice,
+            minWholesaleQty: product.minWholesaleQty,
+            wholesaleImageUrl: product.wholesaleImageUrl,
             images: product.imageUrl,
             quantity: 1,
             slug: product.slug,
@@ -173,7 +179,14 @@ const Search: React.FC<SearchProps> = ({ isOpen, isClose }) => {
                                                     <div className="min-w-0">
                                                         <p className="font-bold text-gray-900 dark:text-gray-100 truncate">{item.name}</p>
                                                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{item.category}</p>
-                                                        <p className="text-mog font-black">₦{item.price.toLocaleString()}</p>
+                                                        <div className="flex flex-col">
+                                                            <p className="text-mog font-black">₦{item.price.toLocaleString()}</p>
+                                                            {item.wholesalePrice && (
+                                                                <p className="text-[10px] text-blue-500 dark:text-blue-400 font-bold">
+                                                                    Bulk: ₦{item.wholesalePrice.toLocaleString()} ({item.minWholesaleQty}+)
+                                                                </p>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 

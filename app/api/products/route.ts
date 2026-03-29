@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, price, category, imageUrl } = body;
+    const { name, price, wholesalePrice, minWholesaleQty, category, imageUrl, wholesaleImageUrl } = body;
 
     // Validate required fields
     if (!name || !price || !imageUrl) {
@@ -70,9 +70,12 @@ export async function POST(req: Request) {
     // Prepare product data
     const productData = {
       name: String(name).trim(),
-      price: parseFloat(price), // Ensure it's a number
+      price: parseFloat(price), 
+      wholesalePrice: wholesalePrice ? parseFloat(wholesalePrice) : null,
+      minWholesaleQty: minWholesaleQty ? parseInt(minWholesaleQty) : null,
       category: category ? String(category).trim() : "Uncategorized",
       imageUrl: String(imageUrl).trim(),
+      wholesaleImageUrl: wholesaleImageUrl ? String(wholesaleImageUrl).trim() : null,
       slug: generateSlug(String(name)),
       createdAt: serverTimestamp(),
     };

@@ -5,8 +5,11 @@ export interface Product {
   id: string;
   name: string;
   price: number;
+  wholesalePrice?: number;
+  minWholesaleQty?: number;
   category: string;
   imageUrl: string;
+  wholesaleImageUrl?: string;
   slug: string;
   createdAt?: string | null;
 }
@@ -32,8 +35,11 @@ export async function getAllProducts(): Promise<Product[]> {
       id: doc.id,
       name: (data['name'] as string) || '',
       price: (data['price'] as number) || 0,
+      wholesalePrice: (data['wholesalePrice'] as number) || undefined,
+      minWholesaleQty: (data['minWholesaleQty'] as number) || undefined,
       category: (data['category'] as string) || 'Uncategorized',
       imageUrl: (data['imageUrl'] as string) || '',
+      wholesaleImageUrl: (data['wholesaleImageUrl'] as string) || undefined,
       slug: (data['slug'] as string) || doc.id,
       createdAt,
     };
@@ -61,8 +67,11 @@ export async function getProductById(id: string): Promise<Product | null> {
     id: docSnap.id,
     name: (data['name'] as string) || '',
     price: (data['price'] as number) || 0,
+    wholesalePrice: (data['wholesalePrice'] as number) || undefined,
+    minWholesaleQty: (data['minWholesaleQty'] as number) || undefined,
     category: (data['category'] as string) || 'Uncategorized',
     imageUrl: (data['imageUrl'] as string) || '',
+    wholesaleImageUrl: (data['wholesaleImageUrl'] as string) || undefined,
     slug: (data['slug'] as string) || docSnap.id,
     createdAt,
   };
@@ -92,8 +101,11 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     id: doc.id,
     name: (data['name'] as string) || '',
     price: (data['price'] as number) || 0,
+    wholesalePrice: (data['wholesalePrice'] as number) || undefined,
+    minWholesaleQty: (data['minWholesaleQty'] as number) || undefined,
     category: (data['category'] as string) || 'Uncategorized',
     imageUrl: (data['imageUrl'] as string) || '',
+    wholesaleImageUrl: (data['wholesaleImageUrl'] as string) || undefined,
     slug: (data['slug'] as string) || doc.id,
     createdAt,
   };

@@ -7,6 +7,9 @@ interface CartItem {
   id: string;
   name: string;
   price: number;
+  wholesalePrice?: number;
+  minWholesaleQty?: number;
+  wholesaleImageUrl?: string;
   quantity: number;
   slug: string;
 }
@@ -134,7 +137,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   const total = useMemo(
     () =>
       state.items.reduce(
-        (sum, item) => sum + item.price * item.quantity,
+        (sum, item) => {
+          const effectivelyWholesale = item.wholesalePrice && item.minWholesaleQty && item.quantity >= item.minWholesaleQty;
+          const currentPrice = effectivelyWholesale ? item.wholesalePrice! : item.price;
+          return sum + currentPrice * item.quantity;
+        },
         0
       ),
     [state.items]

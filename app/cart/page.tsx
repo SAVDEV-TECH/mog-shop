@@ -80,7 +80,16 @@ export default function CartPage() {
                       <Link href={`/p/${item.slug || item.id}`}>
                         <h3 className="text-lg font-bold text-gray-900 dark:text-gray-200 truncate hover:text-mog transition-colors">{item.name}</h3>
                       </Link>
-                      <p className="text-mog font-black text-sm">₦{item.price.toLocaleString()}</p>
+                      <div className="flex flex-col mt-1">
+                        <p className={`font-black text-sm ${item.wholesalePrice && item.minWholesaleQty && item.quantity >= item.minWholesaleQty ? 'text-blue-600 dark:text-blue-400' : 'text-mog'}`}>
+                          ₦{(item.wholesalePrice && item.minWholesaleQty && item.quantity >= item.minWholesaleQty ? item.wholesalePrice : item.price).toLocaleString()}
+                        </p>
+                        {item.wholesalePrice && item.minWholesaleQty && item.quantity >= item.minWholesaleQty && (
+                          <span className="text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-bold w-fit mt-1 uppercase tracking-tighter shadow-sm">
+                            Wholesale Price Applied
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex flex-col md:flex-row items-center gap-4">

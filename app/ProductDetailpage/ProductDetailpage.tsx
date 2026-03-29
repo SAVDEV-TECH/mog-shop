@@ -16,6 +16,7 @@ import {
   Minus,
   Plus
 } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import ProductReviews from "@/components/ProductReviews";
@@ -37,9 +38,12 @@ interface Product {
   id: string;
   name: string;
   price: number;
+  wholesalePrice?: number;
+  minWholesaleQty?: number;
   rating?: number;
   category: string;
   imageUrl: string;
+  wholesaleImageUrl?: string;
   slug: string;
   description?: string;
   stock?: number;
@@ -77,6 +81,9 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
         id: product.id,
         name: product.name,
         price: product.price,
+        wholesalePrice: product.wholesalePrice,
+        minWholesaleQty: product.minWholesaleQty,
+        wholesaleImageUrl: product.wholesaleImageUrl,
         images: productImage,
         quantity: quantity,
         slug: product.slug,
@@ -141,11 +148,11 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
               onMouseLeave={() => setIsHovering(false)}
             >
               <Image
-                src={productImage}
                 alt={product.name}
                 fill
                 priority
                 className={`object-contain p-4 transition-transform duration-700 ease-out ${isHovering ? 'scale-110' : 'scale-100'}`}
+                src={(product.wholesaleImageUrl && quantity >= (product.minWholesaleQty || 12)) ? product.wholesaleImageUrl : productImage}
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
 
@@ -207,16 +214,27 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
               </h1>
             </div>
 
-            <div className="flex items-baseline gap-4">
-              <span className="text-4xl font-bold text-mog">
-                ₦{product.price.toLocaleString()}
-              </span>
-              <span className="text-lg text-gray-400 line-through">
-                ₦{(product.price * 1.2).toLocaleString()}
-              </span>
-              <span className="px-2 py-1 bg-red-100 text-red-600 text-xs font-bold rounded">
-                -20% OFF
-              </span>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-baseline gap-4">
+                <span className="text-4xl font-bold text-mog">
+                  ₦{product.price.toLocaleString()}
+                </span>
+                <span className="text-lg text-gray-400 line-through">
+                  ₦{(product.price * 1.2).toLocaleString()}
+                </span>
+                <span className="px-2 py-1 bg-red-100 text-red-600 text-xs font-bold rounded">
+                  -20% OFF
+                </span>
+              </div>
+              
+              {product.wholesalePrice && product.minWholesaleQty && (
+                <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/50">
+                  <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                  <p className="text-sm font-bold text-blue-700 dark:text-blue-400">
+                    Bulk Discount: ₦{product.wholesalePrice.toLocaleString()} when you buy {product.minWholesaleQty}+ items
+                  </p>
+                </div>
+              )}
             </div>
 
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed max-w-lg">
@@ -250,8 +268,15 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
                 <ShoppingCart className="group-hover:translate-x-1 transition-transform" />
                 Add to Cart
               </button>
-              <button className="flex items-center justify-center gap-3 bg-black dark:bg-white text-white dark:text-black px-8 py-5 rounded-2xl font-bold text-lg hover:opacity-90 transition-all duration-300 transform active:scale-95 border-2 border-transparent">
-                Buy It Now
+              <button 
+                onClick={() => {
+                  const message = `Hello Mogshop! I'm interested in: ${product.name} (Qty: ${quantity})\nPrice: ₦${product.price.toLocaleString()}\nLink: ${window.location.href}`;
+                  window.open(`https://wa.me/2349037624245?text=${encodeURIComponent(message)}`, '_blank');
+                }}
+                className="flex items-center justify-center gap-3 bg-[#25D366] text-white px-8 py-5 rounded-2xl font-bold text-lg hover:bg-[#128C7E] transition-all duration-300 transform active:scale-95 shadow-xl shadow-green-500/20"
+              >
+                <FaWhatsapp size={24} />
+                WhatsApp Order
               </button>
             </div>
 
