@@ -73,6 +73,9 @@ interface Product {
   category: string;
   description?: string;
   image?: string;
+  wholesalePrice?: number;
+  minWholesaleQty?: number;
+  wholesaleImageUrl?: string;
 }
 
 export default function DashboardPage() {
@@ -97,10 +100,13 @@ export default function DashboardPage() {
   const [productForm, setProductForm] = useState({
     name: "",
     price: 0,
+    wholesalePrice: 0,
+    minWholesaleQty: 0,
     stock: 0,
     category: "",
     description: "",
-    image: ""
+    image: "",
+    wholesaleImageUrl: ""
   });
   
   const [productSearchTerm, setProductSearchTerm] = useState("");
@@ -109,7 +115,9 @@ export default function DashboardPage() {
   const [imageUploadMethod, setImageUploadMethod] = useState<"upload" | "url">("upload");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedWholesaleFile, setSelectedWholesaleFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [wholesaleImagePreview, setWholesaleImagePreview] = useState<string>("");
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const setupRealtimeListeners = useCallback(() => {
@@ -302,6 +310,18 @@ export default function DashboardPage() {
     }
   };
 
+  const handleWholesaleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+      if (file.size > 2 * 1024 * 1024) { toast.error("Image size should be less than 2MB"); return; }
+      setSelectedWholesaleFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => { setWholesaleImagePreview(reader.result as string); };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const uploadImage = async (file: File): Promise<string> => {
     try {
       const compressedFile = await compressImage(file);
@@ -359,6 +379,11 @@ export default function DashboardPage() {
       if (imageUploadMethod === "upload" && selectedFile) {
         imageUrl = await uploadImage(selectedFile);
       }
+      
+      let wholesaleImageUrl = productForm.wholesaleImageUrl;
+      if (imageUploadMethod === "upload" && selectedWholesaleFile) {
+        wholesaleImageUrl = await uploadImage(selectedWholesaleFile);
+      }
       let finalCategory = productForm.category.trim();
       if (finalCategory) {
         const normalizedInput = finalCategory.toLowerCase().replace(/s$/i, '');
@@ -379,6 +404,7 @@ export default function DashboardPage() {
         category: finalCategory,
         image: imageUrl,
         imageUrl: imageUrl,
+        wholesaleImageUrl: wholesaleImageUrl,
         slug: generateSlug(productForm.name)
       };
       if (editingProduct) {
@@ -390,9 +416,11 @@ export default function DashboardPage() {
       }
       setShowProductModal(false);
       setEditingProduct(null);
-      setProductForm({ name: "", price: 0, stock: 0, category: "", description: "", image: "" });
+      setProductForm({ name: "", price: 0, wholesalePrice: 0, minWholesaleQty: 0, stock: 0, category: "", description: "", image: "", wholesaleImageUrl: "" });
       setSelectedFile(null);
+      setSelectedWholesaleFile(null);
       setImagePreview("");
+      setWholesaleImagePreview("");
       setUploadProgress(0);
     } catch (error) {
       console.error("Error saving product:", error);
@@ -418,12 +446,16 @@ export default function DashboardPage() {
     setProductForm({
       name: product.name,
       price: product.price,
+      wholesalePrice: product.wholesalePrice || 0,
+      minWholesaleQty: product.minWholesaleQty || 0,
       stock: product.stock,
       category: product.category,
       description: product.description || "",
-      image: product.image || ""
+      image: product.image || "",
+      wholesaleImageUrl: product.wholesaleImageUrl || ""
     });
     setImagePreview(product.image || "");
+    setWholesaleImagePreview(product.wholesaleImageUrl || "");
     setImageUploadMethod("url");
     setShowProductModal(true);
   };
@@ -672,9 +704,21 @@ export default function DashboardPage() {
               <button
                 onClick={() => {
                   setEditingProduct(null);
-                  setProductForm({ name: "", price: 0, stock: 0, category: "", description: "", image: "" });
+                  setProductForm({ 
+                    name: "", 
+                    price: 0, 
+                    wholesalePrice: 0, 
+                    minWholesaleQty: 0, 
+                    stock: 0, 
+                    category: "", 
+                    description: "", 
+                    image: "",
+                    wholesaleImageUrl: "" 
+                  });
                   setSelectedFile(null);
+                  setSelectedWholesaleFile(null);
                   setImagePreview("");
+                  setWholesaleImagePreview("");
                   setImageUploadMethod("upload");
                   setUploadProgress(0);
                   setShowProductModal(true);
@@ -725,12 +769,19 @@ export default function DashboardPage() {
                       <td className="py-4 px-6">{product.category}</td>
                       <td className="py-4 px-6 font-semibold">₦{product.price.toLocaleString()}</td>
                       <td className="py-4 px-6">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${product.stock > 20 ? "bg-green-100 text-green-800" :
-                          product.stock > 10 ? "bg-yellow-100 text-yellow-800" :
-                            "bg-red-100 text-red-800"
-                          }`}>
-                          {product.stock} in stock
-                        </span>
+                        <div className="flex flex-col gap-1">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold w-fit ${product.stock > 20 ? "bg-green-100 text-green-800" :
+                            product.stock > 10 ? "bg-yellow-100 text-yellow-800" :
+                                "bg-red-100 text-red-800"
+                            }`}>
+                            {product.stock} in stock
+                            </span>
+                            {(product.wholesalePrice || product.wholesaleImageUrl) && (
+                                <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-black w-fit uppercase tracking-tighter">
+                                    📦 Wholesale Active
+                                </span>
+                            )}
+                        </div>
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex space-x-2">
@@ -842,6 +893,16 @@ export default function DashboardPage() {
                   <input type="number" value={productForm.stock} onChange={(e) => setProductForm({ ...productForm, stock: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="50" />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Wholesale Price (₦)</label>
+                  <input type="number" value={productForm.wholesalePrice} onChange={(e) => setProductForm({ ...productForm, wholesalePrice: Number(e.target.value) })} className="w-full px-3 py-2 border border-blue-200 dark:border-blue-900 bg-blue-50/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Optional" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Min. Bulk Qty</label>
+                  <input type="number" value={productForm.minWholesaleQty} onChange={(e) => setProductForm({ ...productForm, minWholesaleQty: Number(e.target.value) })} className="w-full px-3 py-2 border border-blue-200 dark:border-blue-900 bg-blue-50/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. 12" />
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Category</label>
                 <input type="text" value={productForm.category} onChange={(e) => setProductForm({ ...productForm, category: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Electronics, Accessories" />
@@ -859,36 +920,61 @@ export default function DashboardPage() {
                   </button>
                 </div>
                 {imageUploadMethod === "upload" && (
-                  <div>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition">
                       <input type="file" accept="image/*" onChange={handleFileSelect} className="hidden" id="image-upload" />
                       <label htmlFor="image-upload" className="cursor-pointer">
                         {imagePreview ? (
                           <div>
-                            <Image src={imagePreview} alt="Preview" width={320} height={192} className="max-h-48 mx-auto mb-3 rounded-lg" unoptimized />
-                            <p className="text-sm text-blue-600 font-medium">Click to change image</p>
+                            <Image src={imagePreview} alt="Preview" width={100} height={100} className="max-h-24 mx-auto mb-2 rounded-lg" unoptimized />
+                            <p className="text-[10px] text-blue-600 font-bold uppercase">Main Image</p>
                           </div>
                         ) : (
                           <div>
-                            <div className="text-4xl mb-2">📷</div>
-                            <p className="text-gray-600 font-medium">Click to upload image</p>
-                            <p className="text-sm text-gray-500 mt-1">PNG, JPG up to 2MB (auto-compressed)</p>
+                            <div className="text-2xl mb-1">📷</div>
+                            <p className="text-[10px] text-gray-500 font-bold uppercase">Upload Retail</p>
                           </div>
                         )}
                       </label>
                     </div>
-                    {selectedFile && <p className="text-sm text-gray-600 mt-2">Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)</p>}
+
+                    <div className="border-2 border-dashed border-blue-300 bg-blue-50/5 rounded-lg p-4 text-center hover:border-blue-500 transition">
+                      <input type="file" accept="image/*" onChange={handleWholesaleFileSelect} className="hidden" id="wholesale-image-upload" />
+                      <label htmlFor="wholesale-image-upload" className="cursor-pointer">
+                        {wholesaleImagePreview ? (
+                          <div>
+                            <Image src={wholesaleImagePreview} alt="Wholesale Preview" width={100} height={100} className="max-h-24 mx-auto mb-2 rounded-lg" unoptimized />
+                            <p className="text-[10px] text-blue-600 font-bold uppercase">Wholesale Image</p>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="text-2xl mb-1">📦</div>
+                            <p className="text-[10px] text-blue-400 font-bold uppercase">Upload Carton</p>
+                          </div>
+                        )}
+                      </label>
+                    </div>
                   </div>
                 )}
                 {imageUploadMethod === "url" && (
-                  <div>
-                    <input type="text" value={productForm.image} onChange={(e) => { setProductForm({ ...productForm, image: e.target.value }); setImagePreview(e.target.value); }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://example.com/image.jpg" />
-                    {imagePreview && (
-                      <div className="mt-3 border rounded-lg p-3">
-                        <p className="text-sm text-gray-600 mb-2">Preview:</p>
-                        <Image src={imagePreview} alt="Preview" width={320} height={192} className="max-h-48 mx-auto rounded-lg" unoptimized onError={() => setImagePreview("")} />
-                      </div>
-                    )}
+                  <div className="space-y-3">
+                    <input type="text" value={productForm.image} onChange={(e) => { setProductForm({ ...productForm, image: e.target.value }); setImagePreview(e.target.value); }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Retail Image URL" />
+                    <input type="text" value={productForm.wholesaleImageUrl} onChange={(e) => { setProductForm({ ...productForm, wholesaleImageUrl: e.target.value }); setWholesaleImagePreview(e.target.value); }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Carton Image URL (Optional)" />
+                    
+                    <div className="flex gap-4">
+                        {imagePreview && imagePreview.trim() && (
+                            <div className="flex-1 border rounded-lg p-2">
+                                <p className="text-[8px] text-gray-400 uppercase mb-1">Retail Preview</p>
+                                <Image src={imagePreview.trim()} alt="Main Preview" width={100} height={100} className="max-h-20 mx-auto rounded" unoptimized onError={() => setImagePreview("")} />
+                            </div>
+                        )}
+                        {wholesaleImagePreview && wholesaleImagePreview.trim() && (
+                            <div className="flex-1 border rounded-lg p-2 border-blue-200">
+                                <p className="text-[8px] text-gray-400 uppercase mb-1">Carton Preview</p>
+                                <Image src={wholesaleImagePreview.trim()} alt="Wholesale Preview" width={100} height={100} className="max-h-20 mx-auto rounded" unoptimized onError={() => setWholesaleImagePreview("")} />
+                            </div>
+                        )}
+                    </div>
                   </div>
                 )}
               </div>

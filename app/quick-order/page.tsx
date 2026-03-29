@@ -7,7 +7,6 @@ import { useCart } from '@/context/CartContext';
 import { FiSearch, FiShoppingCart, FiChevronLeft, FiPlus, FiMinus, FiCheckCircle, FiTrash2 } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
 import toast from 'react-hot-toast';
-import toast from 'react-hot-toast';
 
 interface Product {
   id: string;
