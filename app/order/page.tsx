@@ -15,8 +15,11 @@ import {
   ArrowRight, 
   ChevronLeft,
   Truck,
-  ShoppingBag
+  ShoppingBag,
+  Loader2
 } from "lucide-react";
+import { db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function OrderPage() {
   const { state, total } = useCart();
@@ -32,6 +35,9 @@ export default function OrderPage() {
     state: "",
   });
 
+  const [deliveryFee, setDeliveryFee] = useState(2000);
+  const [loadingSettings, setLoadingSettings] = useState(true);
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
@@ -45,6 +51,22 @@ export default function OrderPage() {
       email: user.email || "",
       fullName: user.displayName || "",
     }));
+
+    // Fetch store settings
+    const fetchSettings = async () => {
+      try {
+        const settingsDoc = await getDoc(doc(db, "settings", "storeConfig"));
+        if (settingsDoc.exists()) {
+          setDeliveryFee(settingsDoc.data()?.['deliveryFee'] || 2000);
+        }
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+      } finally {
+        setLoadingSettings(false);
+      }
+    };
+
+    fetchSettings();
   }, [user, authLoading, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -76,7 +98,7 @@ export default function OrderPage() {
     router.push("/payment");
   };
 
-  if (authLoading) {
+  if (authLoading || loadingSettings) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0a0a0a]">
         <div className="w-12 h-12 border-4 border-mog border-t-transparent rounded-full animate-spin"></div>
@@ -281,11 +303,17 @@ export default function OrderPage() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Delivery</span>
-                      <span className="font-bold text-green-600">₦2,000</span>
+                      <span className="font-bold text-green-600">
+                        {loadingSettings ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          `₦${deliveryFee.toLocaleString()}`
+                        )}
+                      </span>
                     </div>
                     <div className="flex justify-between text-2xl pt-4 border-t border-gray-50 dark:border-gray-800 font-black text-gray-900 dark:text-white">
                       <span>Total</span>
-                      <span>₦{(total + 2000).toLocaleString()}</span>
+                      <span>₦{(total + deliveryFee).toLocaleString()}</span>
                     </div>
                   </div>
 

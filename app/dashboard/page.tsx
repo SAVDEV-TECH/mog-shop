@@ -33,7 +33,10 @@ import {
   Download,
   X,
   Plus,
-  Save
+  Save,
+  Settings,
+  ShieldCheck,
+  Truck
 } from "lucide-react";
 
 interface Order {
@@ -87,6 +90,7 @@ export default function DashboardPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
@@ -110,6 +114,13 @@ export default function DashboardPage() {
   });
   
   const [productSearchTerm, setProductSearchTerm] = useState("");
+
+  // Settings State
+  const [storeSettings, setStoreSettings] = useState({
+    deliveryFee: 2000,
+    paystackPublicKey: "",
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   // Image upload state
   const [imageUploadMethod, setImageUploadMethod] = useState<"upload" | "url">("upload");
@@ -164,6 +175,19 @@ export default function DashboardPage() {
         }
       );
 
+      // Add settings listener
+      const unsubscribeSettings = onSnapshot(
+        doc(db, "settings", "storeConfig"),
+        (snapshot) => {
+          if (snapshot.exists()) {
+            setStoreSettings(snapshot.data() as any);
+          }
+        },
+        (error) => {
+          console.error("Settings listener error:", error);
+        }
+      );
+
     } catch (error) {
       console.error("Error setting up listeners:", error);
       setLoadingData(false);
@@ -190,6 +214,7 @@ export default function DashboardPage() {
     if (user && isAdmin(user.email)) {
       setupRealtimeListeners();
     }
+    setMounted(true);
   }, [user, loading, router, setupRealtimeListeners]);
 
   useEffect(() => {
@@ -527,7 +552,8 @@ export default function DashboardPage() {
           {[
             { id: "overview", icon: LayoutDashboard, label: "Overview" },
             { id: "orders", icon: ShoppingCart, label: "Orders" },
-            { id: "products", icon: Package, label: "Products" }
+            { id: "products", icon: Package, label: "Products" },
+            { id: "settings", icon: Settings, label: "Settings" }
           ].map(item => (
             <button
               key={item.id}
@@ -575,18 +601,20 @@ export default function DashboardPage() {
             <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6 mb-8 border border-gray-100 dark:border-gray-800">
               <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">Revenue Overview (Last 30 Days)</h3>
               <div className="h-72 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.1} />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dy={10} minTickGap={30} />
-                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} tickFormatter={(value: number) => `₦${(value/1000)}k`} dx={-10} />
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
-                      formatter={(value: any) => [`₦${Number(value || 0).toLocaleString()}`, 'Revenue']}
-                    />
-                    <Line type="monotone" dataKey="revenue" stroke="#3B82F6" strokeWidth={4} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 8}} animationDuration={1500} />
-                  </LineChart>
-                </ResponsiveContainer>
+                {mounted && (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.1} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dy={10} minTickGap={30} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} tickFormatter={(value: number) => `₦${(value/1000)}k`} dx={-10} />
+                      <Tooltip 
+                        contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+                        formatter={(value: any) => [`₦${Number(value || 0).toLocaleString()}`, 'Revenue']}
+                      />
+                      <Line type="monotone" dataKey="revenue" stroke="#3B82F6" strokeWidth={4} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 8}} animationDuration={1500} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
 
@@ -802,6 +830,91 @@ export default function DashboardPage() {
             {/* ✅ BulkProductUpload is placed here — inside the Products tab, below the table */}
             <BulkProductUpload products={products} />
 
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === "settings" && (
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-gray-900 rounded-[2rem] p-8 shadow-sm border border-transparent dark:border-gray-800">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl">
+                  <Settings size={24} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black dark:text-white">Store Configuration</h2>
+                  <p className="text-sm text-gray-500">Manage delivery charges and payment integrations</p>
+                </div>
+              </div>
+
+              <div className="space-y-8">
+                {/* Delivery Settings */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    <Truck size={20} className="text-mog" />
+                    Delivery Settings
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-black uppercase tracking-widest text-gray-400 pl-1">Standard Delivery Fee (₦)</label>
+                      <input
+                        type="number"
+                        value={storeSettings.deliveryFee}
+                        onChange={(e) => setStoreSettings(prev => ({ ...prev, deliveryFee: Number(e.target.value) }))}
+                        className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-none rounded-2xl focus:ring-2 focus:ring-mog transition dark:text-white"
+                        placeholder="e.g. 2000"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 dark:border-gray-800 pt-8" />
+
+                {/* Payment Settings */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    <ShieldCheck size={20} className="text-blue-600" />
+                    Payment Integration (Paystack)
+                  </h3>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-gray-400 pl-1">Paystack Public Key</label>
+                    <input
+                      type="text"
+                      value={storeSettings.paystackPublicKey}
+                      onChange={(e) => setStoreSettings(prev => ({ ...prev, paystackPublicKey: e.target.value }))}
+                      className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 transition dark:text-white"
+                      placeholder="pk_test_..."
+                    />
+                    <p className="text-[10px] text-gray-500 pl-1">Get this from your Paystack Dashboard &gt; Settings &gt; API Keys &amp; Webhooks</p>
+                  </div>
+                </div>
+
+                <div className="mt-10 pt-10 border-t border-gray-100 dark:border-gray-800">
+                  <button
+                    onClick={async () => {
+                      setSavingSettings(true);
+                      try {
+                        const { setDoc, doc } = await import("firebase/firestore");
+                        await setDoc(doc(db, "settings", "storeConfig"), {
+                          ...storeSettings,
+                          updatedAt: serverTimestamp()
+                        }, { merge: true });
+                        toast.success("Store configuration updated successfully!");
+                      } catch (error) {
+                        console.error("Error saving settings:", error);
+                        toast.error("Failed to save settings");
+                      } finally {
+                        setSavingSettings(false);
+                      }
+                    }}
+                    disabled={savingSettings}
+                    className="w-full max-w-xs py-4 bg-mog text-white font-bold rounded-[2rem] hover:scale-[1.02] active:scale-95 shadow-xl shadow-mog/20 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {savingSettings ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <><Save size={20} /> Save Configuration</>}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

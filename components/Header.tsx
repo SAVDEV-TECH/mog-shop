@@ -63,6 +63,8 @@ export default function Header() {
               width={64}
               height={64}
               className="h-10 sm:h-14 md:h-16 w-auto"
+              priority
+              loading="eager"
               unoptimized
             />
             <h1 className='text-base sm:text-lg md:text-xl font-bold text-mog'>

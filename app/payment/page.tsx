@@ -17,9 +17,10 @@ import {
   ShoppingBag, 
   CheckCircle2,
   Lock,
-  Package
+  Package,
+  Loader2
 } from "lucide-react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 
 interface PaystackResponse {
   reference?: string;
@@ -43,8 +44,10 @@ export default function PaymentPage() {
   const [paymentMethod, setPaymentMethod] = useState<"paystack" | "pod" | "">("");
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
   const [loading, setLoading] = useState(false);
+  const [deliveryFee, setDeliveryFee] = useState(2000);
+  const [paystackPublicKey, setPaystackPublicKey] = useState("");
+  const [loadingSettings, setLoadingSettings] = useState(true);
 
-  const deliveryFee = 2000;
   const grandTotal = total + deliveryFee;
 
   useEffect(() => {
@@ -62,6 +65,24 @@ export default function PaymentPage() {
     } else {
       router.push("/order");
     }
+
+    // Fetch store settings
+    const fetchSettings = async () => {
+      try {
+        const settingsDoc = await getDoc(doc(db, "settings", "storeConfig"));
+        if (settingsDoc.exists()) {
+          const data = settingsDoc.data();
+          setDeliveryFee(data?.['deliveryFee'] || 2000);
+          setPaystackPublicKey(data?.['paystackPublicKey'] || "");
+        }
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+      } finally {
+        setLoadingSettings(false);
+      }
+    };
+
+    fetchSettings();
   }, [user, authLoading, router]);
 
   const saveOrderToFirebase = async (method: string, paymentRef?: string) => {
@@ -112,7 +133,7 @@ export default function PaymentPage() {
 
   const handlePaystackPayment = () => {
     setLoading(true);
-    const paystackKey = process.env['NEXT_PUBLIC_PAYSTACK_KEY'] || "pk_test_c96cccb18b1d6540ead612acc09289a21aaee16f";
+    const paystackKey = paystackPublicKey || process.env['NEXT_PUBLIC_PAYSTACK_KEY'] || "pk_test_c96cccb18b1d6540ead612acc09289a21aaee16f";
     
     // @ts-ignore
     const handler = window.PaystackPop.setup({
@@ -155,7 +176,7 @@ export default function PaymentPage() {
     }
   };
 
-  if (authLoading || (!customerInfo && state.items.length > 0)) {
+  if (authLoading || loadingSettings || (!customerInfo && state.items.length > 0)) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-[#0a0a0a]">
         <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -311,7 +332,13 @@ export default function PaymentPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Shipping</span>
-                  <span className="font-bold text-green-600">₦{deliveryFee.toLocaleString()}</span>
+                  <span className="font-bold text-green-600">
+                    {loadingSettings ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      `₦${deliveryFee.toLocaleString()}`
+                    )}
+                  </span>
                 </div>
                 <div className="flex justify-between text-lg pt-3 border-t border-gray-100 dark:border-gray-800 font-extrabold text-gray-900 dark:text-white">
                   <span>Grand Total</span>
