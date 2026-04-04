@@ -515,15 +515,15 @@ export default function DashboardPage() {
 
   const StatCard: React.FC<{ icon: IconComponent; title: string; value: number | string; subtitle?: string; bgColor?: string }>
     = ({ icon: Icon, title, value, subtitle, bgColor }) => (
-      <div className={`${bgColor} rounded-lg p-6 shadow-md`}>
+      <div className={`${bgColor} border border-white/40 dark:border-gray-800 rounded-3xl p-6 shadow-xl shadow-blue-900/5 transition-transform hover:scale-[1.02]`}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-            <h3 className="text-3xl font-bold text-gray-900">{value}</h3>
-            {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
+            <p className="text-xs font-black uppercase tracking-widest text-gray-500 mb-1">{title}</p>
+            <h3 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">{value}</h3>
+            {subtitle && <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mt-1">{subtitle}</p>}
           </div>
-          <div className="bg-white bg-opacity-50 p-4 rounded-full">
-            <Icon className="text-gray-700" size={32} />
+          <div className="bg-white/80 dark:bg-gray-800 p-4 rounded-2xl shadow-inner shadow-black/5">
+            <Icon className="text-blue-600 dark:text-blue-400" size={28} />
           </div>
         </div>
       </div>
@@ -598,46 +598,87 @@ export default function DashboardPage() {
             </div>
 
             {/* Revenue Chart */}
-            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6 mb-8 border border-gray-100 dark:border-gray-800">
-              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">Revenue Overview (Last 30 Days)</h3>
-              <div className="h-72 w-full">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl p-8 mb-8 border border-gray-100 dark:border-gray-800">
+              <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight uppercase">Revenue Analytics</h3>
+                  <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500" />
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">30-Day Outlook</span>
+                  </div>
+              </div>
+              <div className="h-80 w-full min-h-[320px]">
                 {mounted && (
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="99%" height="100%" debounce={100} minWidth={0} minHeight={0}>
                     <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.1} />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dy={10} minTickGap={30} />
-                      <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} tickFormatter={(value: number) => `₦${(value/1000)}k`} dx={-10} />
+                      <defs>
+                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.1}/>
+                          <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.05} />
+                      <XAxis 
+                        dataKey="name" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{fill: '#6B7280', fontSize: 10, fontWeight: 700}} 
+                        dy={20} 
+                        minTickGap={30} 
+                      />
+                      <YAxis 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{fill: '#6B7280', fontSize: 10, fontWeight: 700}} 
+                        tickFormatter={(value: number) => `₦${(value/1000)}k`} 
+                        dx={-20} 
+                      />
                       <Tooltip 
-                        contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+                        contentStyle={{ 
+                            borderRadius: '1.5rem', 
+                            border: 'none', 
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            padding: '1.5rem'
+                        }}
+                        itemStyle={{ fontWeight: 800, color: '#1E40AF' }}
+                        labelStyle={{ fontWeight: 900, marginBottom: '0.5rem', color: '#111' }}
                         formatter={(value: any) => [`₦${Number(value || 0).toLocaleString()}`, 'Revenue']}
                       />
-                      <Line type="monotone" dataKey="revenue" stroke="#3B82F6" strokeWidth={4} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 8}} animationDuration={1500} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="revenue" 
+                        stroke="#3B82F6" 
+                        strokeWidth={5} 
+                        dot={{ r: 6, fill: '#3B82F6', strokeWidth: 0 }} 
+                        activeDot={{ r: 10, fill: '#1d4ed8', stroke: '#fff', strokeWidth: 3 }} 
+                        animationDuration={2000} 
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 )}
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-800">Recent Orders</h3>
-                <button onClick={() => setActiveTab("orders")} className="text-blue-600 hover:text-blue-800 font-medium">View All →</button>
+            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl p-8 border border-gray-100 dark:border-gray-800">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight uppercase">Recent Orders</h3>
+                <button onClick={() => setActiveTab("orders")} className="text-sm font-black uppercase tracking-widest text-blue-600 hover:text-blue-800 transition-colors">View All Archive →</button>
               </div>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto scrollbar-hide">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-semibold text-gray-600">Order ID</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-600">Customer</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-600">Amount</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-600">Status</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-600">Date</th>
+                    <tr className="border-b border-gray-100 dark:border-gray-800">
+                      <th className="text-left py-4 px-4 text-[10px] uppercase font-black tracking-widest text-gray-400">Order ID</th>
+                      <th className="text-left py-4 px-4 text-[10px] uppercase font-black tracking-widest text-gray-400">Customer</th>
+                      <th className="text-left py-4 px-4 text-[10px] uppercase font-black tracking-widest text-gray-400">Amount</th>
+                      <th className="text-left py-4 px-4 text-[10px] uppercase font-black tracking-widest text-gray-400">Status</th>
+                      <th className="text-left py-4 px-4 text-[10px] uppercase font-black tracking-widest text-gray-400">Date</th>
                     </tr>
                   </thead>
                   <tbody>
                     {orders.slice(0, 5).map(order => (
-                      <tr key={order.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4 font-medium">{order.id}</td>
+                      <tr key={order.id} className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors group">
+                        <td className="py-4 px-4 font-black text-xs text-blue-600 dark:text-blue-400 uppercase">{order.id.slice(0, 8)}</td>
                         <td className="py-3 px-4">{order.customerInfo.fullName}</td>
                         <td className="py-3 px-4 font-semibold">₦{order.total.toLocaleString()}</td>
                         <td className="py-3 px-4">

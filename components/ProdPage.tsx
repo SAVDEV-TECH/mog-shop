@@ -165,31 +165,6 @@ function ProdPageContent() {
     <div id="shop-section">
       <ProductGarage setSlidetoleft={setSlidetoleft} slidetoleft={slidetoleft} sortOption={sortOption} setSortOption={setSortOption} />
 
-      {/* Back Button - Sticky at top */}
-      <div className="sticky top-0 z-20 bg-white dark:bg-[#0a0a0a] shadow-sm dark:shadow-black border-b border-transparent dark:border-gray-800">
-        <div className="w-11/12 max-w-7xl mx-auto py-3">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
-          >
-            <svg 
-              className="w-5 h-5" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M15 19l-7-7 7-7" 
-              />
-            </svg>
-            <span className="text-sm md:text-base">Back</span>
-          </button>
-        </div>
-      </div>
-
       {/* Wholesale Banner */}
       <div className="w-11/12 max-w-7xl mx-auto mt-6 mb-2">
         <Link 
@@ -335,7 +310,7 @@ function ProdPageContent() {
               </div>
             ) : filteredProducts.length ? (
               // Show products
-              filteredProducts.map((product: ProductsParam) => {
+              filteredProducts.map((product: ProductsParam, index: number) => {
                 return (
                   <div
                     key={product.id}
@@ -361,7 +336,8 @@ function ProdPageContent() {
                         alt={product.name || "Product Image"}
                         fill
                         className="object-contain p-2"
-                        loading="lazy"
+                        priority={index < 4}
+                        loading={index < 4 ? "eager" : "lazy"}
                         sizes="(max-width: 768px) 50vw, 25vw"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;

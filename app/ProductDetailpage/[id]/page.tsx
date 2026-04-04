@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import ProductDetailsPage from "../ProductDetailpage"; // ✅ correct relative path
+import ProductDetailsPage from "@/components/ProductDetail"; 
 
 interface Product {
   id: string;

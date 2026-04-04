@@ -1,10 +1,9 @@
- // lib/firebase.ts
+// lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import {getAuth} from "firebase/auth"
+import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 
-// ✅ Fixed: Using NEXT_PUBLIC_ prefix for client-side access
 const firebaseConfig = {
   apiKey: process.env['NEXT_PUBLIC_FIREBASE_API_KEY'],
   authDomain: process.env['NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN'],
@@ -15,31 +14,17 @@ const firebaseConfig = {
   measurementId: process.env['NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID']
 };
 
-// Prevent re-initialization during hot reloads
-let app;
-try {
-  if (getApps().length > 0) {
-    app = getApp();
-  } else if (firebaseConfig.apiKey) {
-    app = initializeApp(firebaseConfig);
-  } else {
-    console.warn("⚠️ Firebase configuration is missing API Key. Initialization skipped on server.");
-    // Return a dummy app or handle it gracefully
-    app = {} as any; 
-  }
-} catch (error) {
-  console.error("❌ Firebase initialization failed:", error);
-  app = {} as any;
+// Initialize App
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+// Exports
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+
+// ✅ Optimize Auth Persistence (Stay logged in across tabs/refreshes)
+if (typeof window !== "undefined") {
+  setPersistence(auth, browserLocalPersistence).catch(err => console.error("Auth persistence error:", err));
 }
-
-import { Firestore } from "firebase/firestore";
-import { Auth } from "firebase/auth";
-import { FirebaseStorage } from "firebase/storage";
-
-// Firestore & Storage instances
-export const auth = ((app && (app as any).options) ? getAuth(app) : null) as Auth;
-export const db = ((app && (app as any).options) ? getFirestore(app) : null) as Firestore;
-export const storage = ((app && (app as any).options) ? getStorage(app) : null) as FirebaseStorage;
-
 
 export default app;

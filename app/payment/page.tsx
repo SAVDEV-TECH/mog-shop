@@ -53,16 +53,12 @@ export default function PaymentPage() {
   useEffect(() => {
     if (authLoading) return;
 
-    if (!user) {
-      sessionStorage.setItem("redirectAfterLogin", "/payment");
-      router.push("/signin");
-      return;
-    }
-
-    const storedInfo = sessionStorage.getItem("customerInfo");
+    // Load from localStorage for guest support
+    const storedInfo = localStorage.getItem("customerInfo");
     if (storedInfo) {
       setCustomerInfo(JSON.parse(storedInfo));
     } else {
+      // If no info at all, redirect back
       router.push("/order");
     }
 
@@ -88,8 +84,9 @@ export default function PaymentPage() {
   const saveOrderToFirebase = async (method: string, paymentRef?: string) => {
     try {
       const orderData = {
-        userId: user?.uid,
-        userEmail: user?.email,
+        userId: user?.uid || "guest",
+        userEmail: customerInfo?.email || user?.email || "guest",
+        isGuest: !user,
         customerInfo: customerInfo,
         items: state.items.map(item => ({
           id: item.id,
@@ -109,18 +106,20 @@ export default function PaymentPage() {
 
       const docRef = await addDoc(collection(db, "orders"), orderData);
       
-      const idToken = await user?.getIdToken();
+      // ✅ Handle notification logic securely for both users & guests
+      const idToken = user ? await user.getIdToken() : null;
       
       // Send email notification (Background)
       fetch('/api/send-notification', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
+          'Authorization': idToken ? `Bearer ${idToken}` : ''
         },
         body: JSON.stringify({
           orderDetails: { ...orderData, id: docRef.id },
           userEmail: customerInfo?.email || user?.email,
+          isGuest: !user
         }),
       }).catch(e => console.error("Notification failed", e));
 
@@ -146,7 +145,7 @@ export default function PaymentPage() {
         try {
           const orderId = await saveOrderToFirebase("paystack", response.reference);
           dispatch({ type: "CLEAR_CART" });
-          sessionStorage.removeItem("customerInfo");
+          localStorage.removeItem("customerInfo");
           router.push(`/success?id=${orderId}`);
         } catch (error) {
           toast.error("Error processing order. Please contact support.");
@@ -167,7 +166,7 @@ export default function PaymentPage() {
     try {
       const orderId = await saveOrderToFirebase("payment-on-delivery");
       dispatch({ type: "CLEAR_CART" });
-      sessionStorage.removeItem("customerInfo");
+      localStorage.removeItem("customerInfo");
       router.push(`/success?id=${orderId}`);
     } catch (error) {
       toast.error("Error placing order. Please try again.");

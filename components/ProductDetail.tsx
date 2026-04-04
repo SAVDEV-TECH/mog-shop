@@ -33,11 +33,13 @@ import ProductReviews from "@/components/ProductReviews";
 //   stock?: number;
 // }
 
-// ✅ Add this interface
+  // ✅ Enhanced interface with conversion-focused fields
 interface Product {
   id: string;
   name: string;
   price: number;
+  originalPrice?: number; // Real discount data from DB
+  weight?: string;        // e.g. "1kg", "75cl"
   wholesalePrice?: number;
   minWholesaleQty?: number;
   rating?: number;
@@ -58,6 +60,7 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
   const { state: { items: wishlistItems }, dispatch: wishlistDispatch } = useWishlist();
   const [quantity, setQuantity] = useState(1);
   const [isHovering, setIsHovering] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const [activeTab, setActiveTab] = useState<'desc' | 'specs' | 'reviews'>('reviews');
 
   if (!product) {
@@ -75,29 +78,33 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
   const isWishlisted = wishlistItems.some(item => item.id === product.id);
 
   const handleAddToCart = () => {
-    dispatch({
-      type: "ADD_ITEM",
-      item: {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        wholesalePrice: product.wholesalePrice,
-        minWholesaleQty: product.minWholesaleQty,
-        wholesaleImageUrl: product.wholesaleImageUrl,
-        images: productImage,
-        quantity: quantity,
-        slug: product.slug,
-      },
-    });
-    setIsCartOpen(true);
-    toast.success(`Success! ${quantity} ${product.name} added to cart`, {
-      icon: "🎉",
-      style: {
-        borderRadius: '10px',
-        background: '#333',
-        color: '#fff',
-      },
-    });
+    setIsAdding(true);
+    setTimeout(() => {
+      dispatch({
+        type: "ADD_ITEM",
+        item: {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          wholesalePrice: product.wholesalePrice,
+          minWholesaleQty: product.minWholesaleQty,
+          wholesaleImageUrl: product.wholesaleImageUrl,
+          images: productImage,
+          quantity: quantity,
+          slug: product.slug,
+        },
+      });
+      setIsCartOpen(true);
+      setIsAdding(false);
+      toast.success(`Success! ${quantity} ${product.name} added to cart`, {
+        icon: "🎉",
+        style: {
+          borderRadius: '10px',
+          background: '#333',
+          color: '#fff',
+        },
+      });
+    }, 500);
   };
 
   const toggleWishlist = () => {
@@ -122,6 +129,15 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
   const incrementQty = () => setQuantity(prev => prev + 1);
   const decrementQty = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
 
+  // WhatsApp Logic
+  const openWhatsApp = (type: 'order' | 'photo') => {
+    const text = type === 'order' 
+      ? `Hello Mogshop! I'm interested in ordering: ${product.name} (Qty: ${quantity})\nPrice: ₦${product.price.toLocaleString()}\nLink: ${window.location.href}`
+      : `Hello Mogshop! Could you please send me a real-life photo of: ${product.name}?\nLink: ${window.location.href}`;
+    
+    window.open(`https://wa.me/2349037624245?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
@@ -131,7 +147,7 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
           <ChevronRight size={14} />
           <span className="hover:text-mog transition-colors cursor-pointer uppercase">{product.category}</span>
           <ChevronRight size={14} />
-          <span className="text-gray-900 dark:text-white font-medium truncate">{product.name}</span>
+          <span className="text-gray-900 dark:text-white font-medium truncate">{product.name} {product.weight && `- ${product.weight}`}</span>
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
@@ -176,14 +192,14 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
               </button>
             </div>
 
-            {/* Thumbnail Preview (Optional placeholder for now) */}
-            <div className="flex gap-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="w-20 h-20 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-2 cursor-pointer hover:border-mog transition-colors overflow-hidden">
-                  <Image src={productImage} alt="thumbnail" width={80} height={80} className="w-full h-full object-contain opacity-50 grayscale hover:opacity-100 hover:grayscale-0 transition-all" />
-                </div>
-              ))}
-            </div>
+            {/* Photo Request Trust CTA */}
+            <button 
+               onClick={() => openWhatsApp('photo')}
+               className="w-full flex items-center justify-center gap-2 py-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 transition-colors"
+            >
+              <FaWhatsapp className="text-[#25D366]" size={18} />
+              Not sure? Request a real-life photo on WhatsApp
+            </button>
           </motion.div>
 
           {/* Right: Product Details Section */}
@@ -210,7 +226,7 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
               </div>
 
               <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-tight">
-                {product.name}
+                {product.name} {product.weight && <span className="text-gray-400 font-medium font-geist-sans text-2xl">/ {product.weight}</span>}
               </h1>
             </div>
 
@@ -219,12 +235,16 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
                 <span className="text-4xl font-bold text-mog">
                   ₦{product.price.toLocaleString()}
                 </span>
-                <span className="text-lg text-gray-400 line-through">
-                  ₦{(product.price * 1.2).toLocaleString()}
-                </span>
-                <span className="px-2 py-1 bg-red-100 text-red-600 text-xs font-bold rounded">
-                  -20% OFF
-                </span>
+                {(product.originalPrice || product.price * 1.2) > product.price && (
+                  <>
+                    <span className="text-lg text-gray-400 line-through">
+                      ₦{(product.originalPrice || product.price * 1.2).toLocaleString()}
+                    </span>
+                    <span className="px-2 py-1 bg-red-100 text-red-600 text-xs font-bold rounded">
+                      -{Math.round((1 - product.price / (product.originalPrice || product.price * 1.2)) * 100)}% OFF
+                    </span>
+                  </>
+                )}
               </div>
               
               {product.wholesalePrice && product.minWholesaleQty && (
@@ -238,14 +258,14 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
             </div>
 
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed max-w-lg">
-              {product.description || "Experience the perfect blend of quality and style with this premium product. Designed for those who appreciate excellence, it offers unmatched performance and durability."}
+              {product.description || `High-quality ${product.name} perfect for your daily needs. Sourced with care to ensure the best premium experience for our customers.`}
             </p>
 
             <div className="h-px bg-gray-200 dark:bg-gray-800 w-full" />
 
             {/* Quantity Selector */}
             <div className="space-y-3">
-              <span className="text-sm font-bold uppercase tracking-wider text-gray-500">Quantity</span>
+              <span className="text-sm font-bold uppercase tracking-wider text-gray-500">Select Quantity</span>
               <div className="flex items-center gap-4">
                 <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-xl p-1 border border-gray-200 dark:border-gray-700">
                   <button onClick={decrementQty} className="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-600 dark:text-gray-300">
@@ -256,6 +276,7 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
                     <Plus size={18} />
                   </button>
                 </div>
+                {product.weight && <span className="text-xs text-gray-500 font-medium">Approx. {quantity * parseFloat(product.weight || '1')} {product.weight.replace(/[0-9.]/g, '')}</span>}
               </div>
             </div>
 
@@ -263,45 +284,46 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
               <button
                 onClick={handleAddToCart}
-                className="group flex items-center justify-center gap-3 bg-mog text-white px-8 py-5 rounded-2xl font-bold text-lg hover:bg-mog/90 shadow-xl shadow-mog/20 transition-all duration-300 transform active:scale-95"
+                disabled={isAdding}
+                className="group flex items-center justify-center gap-3 bg-mog text-white px-8 py-5 rounded-2xl font-bold text-lg hover:bg-mog/90 shadow-xl shadow-mog/20 transition-all duration-300 transform active:scale-95 disabled:opacity-50"
               >
-                <ShoppingCart className="group-hover:translate-x-1 transition-transform" />
-                Add to Cart
+                {isAdding ? (
+                  <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <ShoppingCart className="group-hover:translate-x-1 transition-transform" />
+                    Add to Cart
+                  </>
+                )}
               </button>
               <button 
-                onClick={() => {
-                  const message = `Hello Mogshop! I'm interested in: ${product.name} (Qty: ${quantity})\nPrice: ₦${product.price.toLocaleString()}\nLink: ${window.location.href}`;
-                  window.open(`https://wa.me/2349037624245?text=${encodeURIComponent(message)}`, '_blank');
-                }}
+                onClick={() => openWhatsApp('order')}
                 className="flex items-center justify-center gap-3 bg-[#25D366] text-white px-8 py-5 rounded-2xl font-bold text-lg hover:bg-[#128C7E] transition-all duration-300 transform active:scale-95 shadow-xl shadow-green-500/20"
               >
                 <FaWhatsapp size={24} />
-                WhatsApp Order
+                Order via WhatsApp
               </button>
             </div>
 
-            {/* Features/Trust Badges */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 pt-8 mt-4 border-t border-gray-100 dark:border-gray-800">
+            {/* Trust Badges */}
+            <div className="grid grid-cols-3 gap-4 pt-8 mt-4 border-t border-gray-100 dark:border-gray-800">
               <div className="flex flex-col items-center gap-2 text-center">
-                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl">
-                  <Truck size={24} />
+                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl">
+                  <Truck size={20} />
                 </div>
-                <span className="text-xs font-bold text-gray-900 dark:text-gray-100">Free Delivery</span>
-                <span className="text-[10px] text-gray-500">On orders over ₦100k</span>
+                <span className="text-[10px] font-bold text-gray-900 dark:text-gray-100 uppercase tracking-tighter">Fast Delivery</span>
               </div>
               <div className="flex flex-col items-center gap-2 text-center">
-                <div className="p-3 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-xl">
-                  <ShieldCheck size={24} />
+                <div className="p-2 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-xl">
+                  <ShieldCheck size={20} />
                 </div>
-                <span className="text-xs font-bold text-gray-900 dark:text-gray-100">Secure Payment</span>
-                <span className="text-[10px] text-gray-500">100% encrypted SSL</span>
+                <span className="text-[10px] font-bold text-gray-900 dark:text-gray-100 uppercase tracking-tighter">Secure Pay</span>
               </div>
               <div className="flex flex-col items-center gap-2 text-center">
-                <div className="p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-xl">
-                  <RefreshCcw size={24} />
+                <div className="p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-xl">
+                  <RefreshCcw size={20} />
                 </div>
-                <span className="text-xs font-bold text-gray-900 dark:text-gray-100">Easy Returns</span>
-                <span className="text-[10px] text-gray-500">7-day return policy</span>
+                <span className="text-[10px] font-bold text-gray-900 dark:text-gray-100 uppercase tracking-tighter">7-Day Return</span>
               </div>
             </div>
           </motion.div>
@@ -310,36 +332,28 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
         <div className="mt-20">
           <div className="border-b border-gray-200 dark:border-gray-800 mb-8">
             <nav className="flex gap-8">
-              <button 
-                onClick={() => setActiveTab('desc')}
-                className={`px-1 py-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'desc' ? 'text-mog border-mog' : 'text-gray-500 border-transparent hover:text-gray-900 dark:hover:text-white'}`}
-              >
-                Description
-              </button>
-              <button 
-                onClick={() => setActiveTab('specs')}
-                className={`px-1 py-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'specs' ? 'text-mog border-mog' : 'text-gray-500 border-transparent hover:text-gray-900 dark:hover:text-white'}`}
-              >
-                Specifications
-              </button>
-              <button 
-                onClick={() => setActiveTab('reviews')}
-                className={`px-1 py-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'reviews' ? 'text-mog border-mog' : 'text-gray-500 border-transparent hover:text-gray-900 dark:hover:text-white'}`}
-              >
-                Feedback & Reviews
-              </button>
+              {['desc', 'specs', 'reviews'].map((tab) => (
+                <button 
+                  key={tab}
+                  onClick={() => setActiveTab(tab as any)}
+                  className={`px-1 py-4 text-sm font-bold border-b-2 transition-colors uppercase tracking-widest ${activeTab === tab ? 'text-mog border-mog' : 'text-gray-500 border-transparent hover:text-gray-900 dark:hover:text-white'}`}
+                >
+                  {tab === 'desc' ? 'Description' : tab === 'specs' ? 'Specs' : 'Reviews'}
+                </button>
+              ))}
             </nav>
           </div>
           
           {activeTab === 'desc' && (
-            <div className="py-2 prose dark:prose-invert max-w-none animate-in fade-in">
-              <p className="text-gray-600 dark:text-gray-400">
-                Elevate your lifestyle with our premium {product.name}. Crafted with precision and attention to detail, this piece represents the pinnacle of modern design. Whether you're looking for performance, style, or reliability, this product delivers on all fronts.
+            <div className="py-2 prose dark:prose-invert max-w-none animate-in fade-in slide-in-from-bottom-4">
+              <p className="text-gray-600 dark:text-gray-400 text-lg">
+                Our {product.name} is carefully selected to meet the highest standards of quality in the MogShop marketplace. 
+                {product.description || "Designed for reliability and excellence, this product serves as a core part of our premium collection."}
               </p>
-              <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 list-none p-0">
-                {['Premium Quality Material', 'Modern Ergonomic Design', 'Vibrant Long-lasting Finish', 'Optimized for Performance'].map((feat, i) => (
-                  <li key={i} className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                    <div className="w-1.5 h-1.5 rounded-full bg-mog" />
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 list-none p-0">
+                {['Direct from Source', 'Quality Inspected', 'Sustainable Packaging', 'MogShop Certified'].map((feat, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm font-medium text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                    <div className="w-2 h-2 rounded-full bg-mog" />
                     {feat}
                   </li>
                 ))}
@@ -348,20 +362,19 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
           )}
 
           {activeTab === 'specs' && (
-            <div className="py-2 animate-in fade-in">
+            <div className="py-2 animate-in fade-in slide-in-from-bottom-4">
               <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl overflow-hidden max-w-2xl">
-                <div className="grid grid-cols-2 border-b border-gray-100 dark:border-gray-800">
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800/50 text-gray-500 font-bold text-sm uppercase">Category</div>
-                  <div className="p-4 font-medium text-gray-900 dark:text-white capitalize">{product.category}</div>
-                </div>
-                <div className="grid grid-cols-2 border-b border-gray-100 dark:border-gray-800">
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800/50 text-gray-500 font-bold text-sm uppercase">Availability</div>
-                  <div className="p-4 font-medium text-green-600 dark:text-green-500">In Stock</div>
-                </div>
-                <div className="grid grid-cols-2">
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800/50 text-gray-500 font-bold text-sm uppercase">Shipping</div>
-                  <div className="p-4 font-medium text-gray-900 dark:text-white">Ships in 24 hours</div>
-                </div>
+                {[
+                  { label: "Category", value: product.category },
+                  { label: "Weight / Unit", value: product.weight || "Standard" },
+                  { label: "Availability", value: "In Stock", custom: "text-green-600" },
+                  { label: "Delivery", value: "Ships in 24 hours" },
+                ].map((row, i) => (
+                  <div key={i} className={`grid grid-cols-2 ${i !== 3 ? 'border-b border-gray-100 dark:border-gray-800' : ''}`}>
+                    <div className="p-5 bg-gray-50/50 dark:bg-gray-800/30 text-gray-500 font-bold text-xs uppercase tracking-widest">{row.label}</div>
+                    <div className={`p-5 font-bold text-sm ${row.custom || 'text-gray-900 dark:text-white'} capitalize`}>{row.value}</div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -375,3 +388,4 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
     </div>
   );
 }
+

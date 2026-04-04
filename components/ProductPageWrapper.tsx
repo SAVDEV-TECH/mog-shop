@@ -1,6 +1,5 @@
 "use client"
 
- 
 import dynamic from 'next/dynamic'
  
 interface product {
@@ -13,7 +12,8 @@ interface product {
     slug: string;
 }
 
-const ProductDetailspage =dynamic(()=>import("@/app/ProductDetailpage/ProductDetailpage"),{ssr:false})
- export default function ProductDetailpage ({product}:{product:product}){
-return <ProductDetailspage product={product}></ProductDetailspage>
- }
+const ProductDetailComponent = dynamic(() => import("@/components/ProductDetail"), { ssr: false })
+
+export default function ProductDetailpage({ product }: { product: product }) {
+  return <ProductDetailComponent product={product as any} />
+}

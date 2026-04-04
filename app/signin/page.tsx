@@ -18,6 +18,7 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
   signInWithPopup,
+  signInWithRedirect,
   GoogleAuthProvider,
   getRedirectResult,
   sendPasswordResetEmail
@@ -96,15 +97,29 @@ export default function MogShopAuth() {
     setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      toast.success("Signed in with Google!");
-      const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || '/';
-      sessionStorage.removeItem('redirectAfterLogin');
-      router.push(redirectUrl);
+      
+      // Determine if we should use redirect instead of popup (Popups are often slow/blocked on mobile)
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        toast.loading("Redirecting to Google...", { duration: 2000 });
+        await signInWithRedirect(auth, provider);
+      } else {
+        await signInWithPopup(auth, provider);
+        toast.success("Signed in with Google!");
+        const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || '/';
+        sessionStorage.removeItem('redirectAfterLogin');
+        router.push(redirectUrl);
+      }
     } catch (err: any) {
-      toast.error(err.message || 'Google sign-in failed');
+      if (err.code !== 'auth/popup-closed-by-user') {
+        toast.error(err.message || 'Google sign-in failed');
+      }
     } finally {
-      setLoading(false);
+      // Don't set loading to false on redirect, as the page will unload
+      if (!/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        setLoading(false);
+      }
     }
   };
 

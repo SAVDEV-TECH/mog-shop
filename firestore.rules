@@ -7,13 +7,13 @@ service cloud.firestore {
     function isAdmin() {
       return request.auth != null && 
         (request.auth.token.email == 'savde388@gmail.com' || 
-         request.auth.token.email.matches('.*@mogshop\\.com$')); // Add other admin domains/emails here
+         request.auth.token.email.matches('.*@mogshop\\.com$'));
     }
 
     // Settings collection rules
     match /settings/{settingId} {
-      allow read: if true; // Allow anyone to read settings (needed for delivery fees)
-      allow write: if isAdmin(); // Only admins can update settings
+      allow read: if true; 
+      allow write: if isAdmin();
     }
 
     // Products collection rules
@@ -24,8 +24,14 @@ service cloud.firestore {
 
     // Orders collection rules
     match /orders/{orderId} {
-      allow create: if request.auth != null; // Any logged in user can create an order
-      allow read, update: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
+      // Allow creation for logged in users or guest checkout
+      allow create: if request.auth != null || request.resource.data.isGuest == true; 
+      
+      // Allow viewing a specific order (e.g. on the Success Page)
+      allow get: if true; 
+
+      // Only admins or the owner can query multiple orders or update them
+      allow list, update: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
       allow delete: if isAdmin();
     }
     

@@ -9,6 +9,7 @@ import { ThemeProvider } from '@/components/ThemeProvider'
 import { Toaster } from "react-hot-toast";
 import PageWrapper from "@/components/PageWrapper";
 import CartDrawer from "@/components/CartDrawer";
+import Footer from "@/components/Footer";
 import Script from "next/script";
 
 const geistSans = localFont({
@@ -68,6 +69,7 @@ export default function RootLayout({
                 <PageWrapper>
                   {children}
                 </PageWrapper>
+                <Footer />
               </CartProvider>
             </WishlistProvider>
           </AuthProvider>

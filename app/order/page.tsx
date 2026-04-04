@@ -39,18 +39,21 @@ export default function OrderPage() {
   const [loadingSettings, setLoadingSettings] = useState(true);
 
   useEffect(() => {
+    // Check if auth is settled
     if (authLoading) return;
-    if (!user) {
-      sessionStorage.setItem("redirectAfterLogin", "/order");
-      router.push("/signin");
-      return;
-    }
 
-    setCustomerInfo(prev => ({
-      ...prev,
-      email: user.email || "",
-      fullName: user.displayName || "",
-    }));
+    // Load from localStorage if exists
+    const storedInfo = localStorage.getItem("customerInfo");
+    if (storedInfo) {
+      setCustomerInfo(JSON.parse(storedInfo));
+    } else if (user) {
+      // Pre-fill only if no existing stored info
+      setCustomerInfo(prev => ({
+        ...prev,
+        email: user.email || "",
+        fullName: user.displayName || "",
+      }));
+    }
 
     // Fetch store settings
     const fetchSettings = async () => {
@@ -67,12 +70,15 @@ export default function OrderPage() {
     };
 
     fetchSettings();
-  }, [user, authLoading, router]);
+  }, [user, authLoading]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setCustomerInfo({
-      ...customerInfo,
-      [e.target.name]: e.target.value,
+    const { name, value } = e.target;
+    setCustomerInfo(prev => {
+      const updated = { ...prev, [name]: value };
+      // Save locally as user types to persist work
+      localStorage.setItem("customerInfo", JSON.stringify(updated));
+      return updated;
     });
   };
 
@@ -88,11 +94,12 @@ export default function OrderPage() {
       return;
     }
 
-    // ✅ Save userId and userEmail alongside customer info
-    sessionStorage.setItem("customerInfo", JSON.stringify({
+    // Save final state with metadata
+    localStorage.setItem("customerInfo", JSON.stringify({
       ...customerInfo,
-      userId: user?.uid,
-      userEmail: user?.email,
+      userId: user?.uid || "guest",
+      userEmail: customerInfo.email,
+      isGuest: !user,
     }));
 
     router.push("/payment");
