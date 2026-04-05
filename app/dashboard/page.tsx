@@ -114,6 +114,7 @@ export default function DashboardPage() {
   });
   
   const [productSearchTerm, setProductSearchTerm] = useState("");
+  const [categoryMode, setCategoryMode] = useState<"select" | "create">("select");
 
   // Settings State
   const [storeSettings, setStoreSettings] = useState({
@@ -468,6 +469,7 @@ export default function DashboardPage() {
 
   const openEditProduct = (product: Product) => {
     setEditingProduct(product);
+    setCategoryMode("select");
     setProductForm({
       name: product.name,
       price: product.price,
@@ -784,6 +786,7 @@ export default function DashboardPage() {
                     image: "",
                     wholesaleImageUrl: "" 
                   });
+                  setCategoryMode("select");
                   setSelectedFile(null);
                   setSelectedWholesaleFile(null);
                   setImagePreview("");
@@ -1040,26 +1043,97 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Price (₦) *</label>
-                  <input type="number" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="45000" />
+                  <input
+                    type="number"
+                    value={productForm.price === 0 ? "" : productForm.price}
+                    onChange={(e) => setProductForm({ ...productForm, price: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g. 1500"
+                    min={0}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Stock Quantity *</label>
-                  <input type="number" value={productForm.stock} onChange={(e) => setProductForm({ ...productForm, stock: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="50" />
+                  <input
+                    type="number"
+                    value={productForm.stock === 0 ? "" : productForm.stock}
+                    onChange={(e) => setProductForm({ ...productForm, stock: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g. 50"
+                    min={0}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Wholesale Price (₦)</label>
-                  <input type="number" value={productForm.wholesalePrice} onChange={(e) => setProductForm({ ...productForm, wholesalePrice: Number(e.target.value) })} className="w-full px-3 py-2 border border-blue-200 dark:border-blue-900 bg-blue-50/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Optional" />
+                  <input
+                    type="number"
+                    value={productForm.wholesalePrice === 0 ? "" : productForm.wholesalePrice}
+                    onChange={(e) => setProductForm({ ...productForm, wholesalePrice: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border border-blue-200 dark:border-blue-900 bg-blue-50/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Optional"
+                    min={0}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Min. Bulk Qty</label>
-                  <input type="number" value={productForm.minWholesaleQty} onChange={(e) => setProductForm({ ...productForm, minWholesaleQty: Number(e.target.value) })} className="w-full px-3 py-2 border border-blue-200 dark:border-blue-900 bg-blue-50/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. 12" />
+                  <input
+                    type="number"
+                    value={productForm.minWholesaleQty === 0 ? "" : productForm.minWholesaleQty}
+                    onChange={(e) => setProductForm({ ...productForm, minWholesaleQty: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border border-blue-200 dark:border-blue-900 bg-blue-50/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g. 12"
+                    min={0}
+                  />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Category</label>
-                <input type="text" value={productForm.category} onChange={(e) => setProductForm({ ...productForm, category: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Electronics, Accessories" />
+                <label className="block text-sm font-medium mb-1">Category *</label>
+                {/* Smart Category Selector */}
+                {categoryMode === "select" ? (
+                  <div className="flex gap-2">
+                    <select
+                      value={productForm.category}
+                      onChange={(e) => {
+                        if (e.target.value === "__create_new__") {
+                          setCategoryMode("create");
+                          setProductForm({ ...productForm, category: "" });
+                        } else {
+                          setProductForm({ ...productForm, category: e.target.value });
+                        }
+                      }}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    >
+                      <option value="">-- Select a category --</option>
+                      {Array.from(new Set(products.map(p => p.category).filter(Boolean))).sort().map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                      <option value="__create_new__">➕ Create new category...</option>
+                    </select>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      autoFocus
+                      value={productForm.category}
+                      onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Type new category name..."
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setCategoryMode("select")}
+                      className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 font-medium transition whitespace-nowrap"
+                    >
+                      ← Back
+                    </button>
+                  </div>
+                )}
+                <p className="text-[10px] text-gray-400 mt-1 pl-1">
+                  {categoryMode === "select" ? "Select from existing or create a new one" : "Enter the new category name then save"}
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Product Image</label>
