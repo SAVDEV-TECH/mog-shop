@@ -113,34 +113,38 @@ export default function ProfilePage() {
           <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
             <Link 
               href="/my-orders"
-              className="bg-white dark:bg-gray-900 rounded-[2.5rem] p-8 shadow-sm border border-transparent dark:border-gray-800 hover:shadow-xl hover:shadow-blue-900/5 transition flex items-center justify-between group"
+              className="bg-white dark:bg-gray-900 rounded-[2.5rem] p-8 shadow-sm border border-transparent dark:border-gray-800 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 flex items-center justify-between group"
             >
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl">
-                  <ShoppingBag size={24} />
+              <div className="flex items-center gap-5">
+                <div className="p-4 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-3xl shadow-lg shadow-blue-500/30 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
+                  <ShoppingBag size={28} />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold dark:text-white">Order History</h3>
                   <p className="text-sm text-gray-400">Manage recent purchases</p>
                 </div>
               </div>
-              <ChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
+              <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-all duration-500">
+                <ChevronRight className="text-gray-400 group-hover:text-white transition-transform group-hover:translate-x-1" />
+              </div>
             </Link>
 
             <Link 
               href="/wishlist"
-              className="bg-white dark:bg-gray-900 rounded-[2.5rem] p-8 shadow-sm border border-transparent dark:border-gray-800 hover:shadow-xl hover:shadow-red-900/5 transition flex items-center justify-between group"
+              className="bg-white dark:bg-gray-900 rounded-[2.5rem] p-8 shadow-sm border border-transparent dark:border-gray-800 hover:shadow-2xl hover:shadow-red-500/10 transition-all duration-500 flex items-center justify-between group"
             >
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-2xl">
-                  <Heart size={24} />
+              <div className="flex items-center gap-5">
+                <div className="p-4 bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-3xl shadow-lg shadow-red-500/30 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-500">
+                  <Heart size={28} />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold dark:text-white">Wishlist</h3>
                   <p className="text-sm text-gray-400">Saved items for later</p>
                 </div>
               </div>
-              <ChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
+              <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-all duration-500">
+                <ChevronRight className="text-gray-400 group-hover:text-white transition-transform group-hover:translate-x-1" />
+              </div>
             </Link>
           </div>
         </div>

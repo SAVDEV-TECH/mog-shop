@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import Image from 'next/image'
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -23,6 +23,7 @@ import {
   LayoutDashboard,
   Package,
   Users,
+  CheckCircle2,
   DollarSign,
   ShoppingCart,
   Eye,
@@ -36,8 +37,17 @@ import {
   Save,
   Settings,
   ShieldCheck,
-  Truck
+  Truck,
+  Sparkles,
+  Wallet,
+  History,
+  ArrowRightLeft,
+  Calendar
 } from "lucide-react";
+import ProductAIAgent from "@/components/ProductAIAgent";
+import CreditAIAgent from "@/components/CreditAIAgent";
+import { motion, AnimatePresence } from "framer-motion";
+
 
 interface Order {
   id: string;
@@ -93,12 +103,17 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [creditRecords, setCreditRecords] = useState<any[]>([]);
+  const [creditSearchTerm, setCreditSearchTerm] = useState("");
+  const [isOnline, setIsOnline] = useState(true);
 
   // Modals
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [chartDimensions, setChartDimensions] = useState({ width: 0, height: 0 });
+  const chartRef = useRef<HTMLDivElement>(null);
 
   // Product form
   const [productForm, setProductForm] = useState({
@@ -112,6 +127,66 @@ export default function DashboardPage() {
     image: "",
     wholesaleImageUrl: ""
   });
+
+  const handleAIProductParsed = (data: any, existingId?: string) => {
+    if (existingId) {
+      const existing = products.find(p => p.id === existingId);
+      if (existing) {
+        setEditingProduct(existing);
+        setProductForm({
+          name: existing.name,
+          price: data.price || existing.price,
+          wholesalePrice: data.wholesalePrice || existing.wholesalePrice || 0,
+          minWholesaleQty: data.minWholesaleQty || existing.minWholesaleQty || 0,
+          stock: existing.stock || 0,
+          category: data.category || existing.category || "",
+          description: data.description || existing.description || "",
+          image: data.imageUrl || existing.image || "",
+          wholesaleImageUrl: existing.wholesaleImageUrl || ""
+        });
+        setImagePreview(data.imageUrl || existing.image || "");
+        setCategoryMode("select");
+        setImageUploadMethod(data.imageUrl ? "url" : (existing.image ? "url" : "upload"));
+        setShowProductModal(true);
+        toast.success(`Found existing product: ${existing.name}. Ready to update.`);
+        return;
+      }
+    }
+
+    setEditingProduct(null);
+    setProductForm({
+      name: data.name || "",
+      price: data.price || 0,
+      wholesalePrice: data.wholesalePrice || 0,
+      minWholesaleQty: data.minWholesaleQty || 0,
+      stock: 100, // Default stock
+      category: data.category || "",
+      description: data.description || "",
+      image: data.imageUrl ? String(data.imageUrl).trim() : "",
+      wholesaleImageUrl: ""
+    });
+    setCategoryMode(data.category ? "select" : "create");
+    setImageUploadMethod(data.imageUrl ? "url" : "upload");
+    setImagePreview(data.imageUrl ? String(data.imageUrl).trim() : "");
+    setShowProductModal(true);
+  };
+
+  const handleAICreditParsed = async (data: any) => {
+    try {
+      await addDoc(collection(db, "credits"), {
+        ...data,
+        createdAt: serverTimestamp(),
+        status: data.balance === 0 ? "paid" : "pending"
+      });
+      toast.success("Debt record added to ledger!");
+    } catch (error) {
+      console.error("Error adding credit record:", error);
+      toast.error("Failed to save credit record");
+    }
+  };
+
+
+
   
   const [productSearchTerm, setProductSearchTerm] = useState("");
   const [categoryMode, setCategoryMode] = useState<"select" | "create">("select");
@@ -176,6 +251,21 @@ export default function DashboardPage() {
         }
       );
 
+      // Add credits listener
+      const unsubscribeCredits = onSnapshot(
+        query(collection(db, "credits"), orderBy("createdAt", "desc")),
+        (snapshot) => {
+          const creditsData = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          setCreditRecords(creditsData);
+        },
+        (error) => {
+          console.error("Credits listener error:", error);
+        }
+      );
+
       // Add settings listener
       const unsubscribeSettings = onSnapshot(
         doc(db, "settings", "storeConfig"),
@@ -189,15 +279,17 @@ export default function DashboardPage() {
         }
       );
 
+      return () => {
+        if (unsubscribeOrders) unsubscribeOrders();
+        if (unsubscribeProducts) unsubscribeProducts();
+        if (unsubscribeCredits) unsubscribeCredits();
+        if (unsubscribeSettings) unsubscribeSettings();
+      };
+
     } catch (error) {
       console.error("Error setting up listeners:", error);
       setLoadingData(false);
     }
-
-    return () => {
-      if (unsubscribeOrders) unsubscribeOrders();
-      if (unsubscribeProducts) unsubscribeProducts();
-    };
   }, []);
 
   useEffect(() => {
@@ -216,7 +308,35 @@ export default function DashboardPage() {
       setupRealtimeListeners();
     }
     setMounted(true);
+
+    // Monitor Firestore connection
+    const checkConnection = () => {
+      if (typeof window !== "undefined") {
+        setIsOnline(navigator.onLine);
+      }
+    };
+    window.addEventListener("online", checkConnection);
+    window.addEventListener("offline", checkConnection);
+    return () => {
+      window.removeEventListener("online", checkConnection);
+      window.removeEventListener("offline", checkConnection);
+    };
   }, [user, loading, router, setupRealtimeListeners]);
+
+  useEffect(() => {
+    if (mounted && chartRef.current) {
+      const observer = new ResizeObserver((entries) => {
+        if (entries[0]) {
+          const { width, height } = entries[0].contentRect;
+          if (width > 0 && height > 0) {
+            setChartDimensions({ width, height });
+          }
+        }
+      });
+      observer.observe(chartRef.current);
+      return () => observer.disconnect();
+    }
+  }, [mounted]);
 
   useEffect(() => {
     if (products.length > 0) {
@@ -282,6 +402,21 @@ export default function DashboardPage() {
     } catch (error) {
       console.error("Error updating order:", error);
       toast.error("Failed to update order status");
+    }
+  };
+
+  const handleMarkAsPaid = async (record: any) => {
+    if (!record.id) return;
+    try {
+      await updateDoc(doc(db, "credits", record.id), {
+        deposited: record.amountOwed || 0,
+        balance: 0,
+        status: "paid"
+      });
+      toast.success("Debt marked as paid!");
+    } catch (error) {
+      console.error("Error updating credit record:", error);
+      toast.error("Failed to update record.");
     }
   };
 
@@ -426,13 +561,19 @@ export default function DashboardPage() {
       }
 
       const productData = {
-        ...productForm,
+        name: productForm.name || "",
+        price: Number(productForm.price) || 0,
+        wholesalePrice: Number(productForm.wholesalePrice) || 0,
+        minWholesaleQty: Number(productForm.minWholesaleQty) || 0,
+        stock: Number(productForm.stock) || 0,
         category: finalCategory,
-        image: imageUrl,
-        imageUrl: imageUrl,
-        wholesaleImageUrl: wholesaleImageUrl,
+        description: productForm.description || "",
+        image: imageUrl || "",
+        imageUrl: imageUrl || "",
+        wholesaleImageUrl: wholesaleImageUrl || "",
         slug: generateSlug(productForm.name)
       };
+
       if (editingProduct) {
         await updateDoc(doc(db, "products", editingProduct.id), { ...productData, updatedAt: serverTimestamp() });
         toast.success("Product updated successfully!");
@@ -471,12 +612,12 @@ export default function DashboardPage() {
     setEditingProduct(product);
     setCategoryMode("select");
     setProductForm({
-      name: product.name,
-      price: product.price,
+      name: product.name || "",
+      price: product.price || 0,
       wholesalePrice: product.wholesalePrice || 0,
       minWholesaleQty: product.minWholesaleQty || 0,
-      stock: product.stock,
-      category: product.category,
+      stock: product.stock || 0,
+      category: product.category || "",
       description: product.description || "",
       image: product.image || "",
       wholesaleImageUrl: product.wholesaleImageUrl || ""
@@ -524,8 +665,11 @@ export default function DashboardPage() {
             <h3 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">{value}</h3>
             {subtitle && <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mt-1">{subtitle}</p>}
           </div>
-          <div className="bg-white/80 dark:bg-gray-800 p-4 rounded-2xl shadow-inner shadow-black/5">
-            <Icon className="text-blue-600 dark:text-blue-400" size={28} />
+          <div className="relative group">
+            <div className="absolute inset-0 bg-mog blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
+            <div className="relative bg-white dark:bg-gray-800 p-4 rounded-[1.5rem] shadow-lg border border-gray-100 dark:border-gray-700 transition-all duration-300 group-hover:shadow-mog/20 group-hover:-translate-y-1">
+              <Icon className="text-mog" size={28} />
+            </div>
           </div>
         </div>
       </div>
@@ -546,9 +690,14 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex text-gray-900 dark:text-gray-100 transition-colors">
       {/* Sidebar */}
       <div className="w-64 bg-gradient-to-b from-blue-900 to-blue-800 dark:from-gray-950 dark:to-gray-900 text-white p-6 shadow-xl border-r border-transparent dark:border-gray-800">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold">🛍️ MogShop</h1>
-          <p className="text-blue-200 text-sm">Admin Dashboard</p>
+        <div className="flex items-center gap-3 mb-10">
+          <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/10 shadow-lg">
+            <Package className="text-white" size={24} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-black tracking-tighter text-white">MogShop</h1>
+            <p className="text-blue-300 text-[10px] font-bold uppercase tracking-widest opacity-80">Admin Center</p>
+          </div>
         </div>
         <nav className="space-y-2">
           {[
@@ -560,11 +709,21 @@ export default function DashboardPage() {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition ${activeTab === item.id ? "bg-blue-700 text-white" : "text-blue-200 hover:bg-blue-700 hover:text-white"
-                }`}
+              className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 group ${
+                activeTab === item.id 
+                  ? "bg-white/15 text-white shadow-lg backdrop-blur-md border border-white/10" 
+                  : "text-blue-200 hover:bg-white/5 hover:text-white"
+              }`}
             >
-              <item.icon size={20} />
-              <span>{item.label}</span>
+              <div className={`p-2 rounded-xl transition-all duration-300 ${
+                activeTab === item.id ? "bg-white text-blue-900 shadow-inner" : "bg-blue-800/50 group-hover:bg-blue-700"
+              }`}>
+                <item.icon size={18} className="transition-transform group-hover:scale-110" />
+              </div>
+              <span className="font-bold tracking-tight">{item.label}</span>
+              {activeTab === item.id && (
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              )}
             </button>
           ))}
         </nav>
@@ -582,12 +741,24 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <div className="flex-1 p-8 overflow-y-auto">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-            {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400">Welcome back, Admin!</p>
-        </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400">Welcome back, Admin!</p>
+            </div>
+            {!isOnline && (
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl border border-amber-200 dark:border-amber-800"
+              >
+                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span className="text-xs font-bold uppercase tracking-widest">Offline Mode</span>
+              </motion.div>
+            )}
+          </div>
 
         {/* Overview Tab */}
         {activeTab === "overview" && (
@@ -608,9 +779,9 @@ export default function DashboardPage() {
                       <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">30-Day Outlook</span>
                   </div>
               </div>
-              <div className="h-80 w-full min-h-[320px]">
-                {mounted && (
-                  <ResponsiveContainer width="99%" height="100%" debounce={100} minWidth={0} minHeight={0}>
+              <div ref={chartRef} className="h-[400px] w-full min-w-0 relative">
+                {mounted && chartDimensions.width > 0 && (
+                  <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData}>
                       <defs>
                         <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -820,11 +991,12 @@ export default function DashboardPage() {
                       <td className="py-4 px-6">
                         {product.image ? (
                           <Image
-                            src={String(product.image)}
+                            src={String(product.image).trim()}
                             alt={product.name}
                             width={48}
                             height={48}
                             className="object-cover rounded-lg border"
+                            style={{ width: '48px', height: '48px' }}
                             unoptimized
                             onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                               const target = e.currentTarget as HTMLImageElement;
@@ -874,6 +1046,121 @@ export default function DashboardPage() {
             {/* ✅ BulkProductUpload is placed here — inside the Products tab, below the table */}
             <BulkProductUpload products={products} />
 
+          </div>
+        )}
+
+        {/* Credit Ledger Tab */}
+        {activeTab === "credits" && (
+          <div className="space-y-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight uppercase">Credit Ledger</h3>
+                <p className="text-gray-500 dark:text-gray-400 font-medium">Manage customer debts and credit sales effortlessly.</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="bg-emerald-50 dark:bg-emerald-900/10 px-6 py-3 rounded-[2rem] border border-emerald-100 dark:border-emerald-800 shadow-sm">
+                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Total Outstanding</p>
+                    <p className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
+                        ₦{(creditRecords || []).reduce((sum, r) => sum + (Number(r.balance) || 0), 0).toLocaleString()}
+                    </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-950 rounded-[2.5rem] border border-gray-200 dark:border-gray-800 shadow-xl shadow-gray-200/20 overflow-hidden">
+                {/* Search */}
+                <div className="p-8 border-b border-gray-100 dark:border-gray-800">
+                  <div className="relative max-w-md">
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input 
+                      type="text" 
+                      placeholder="Search customer or description..." 
+                      value={creditSearchTerm}
+                      onChange={(e) => setCreditSearchTerm(e.target.value)}
+                      className="w-full pl-14 pr-4 py-4 bg-gray-50 dark:bg-gray-900 border-none rounded-[1.5rem] focus:ring-2 focus:ring-emerald-500 transition-all outline-none text-sm font-medium"
+                    />
+                  </div>
+                </div>
+
+                {/* Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="bg-gray-50/50 dark:bg-gray-900/50">
+                        <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Customer</th>
+                        <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Description</th>
+                        <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Total</th>
+                        <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Balance</th>
+                        <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                        <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Date</th>
+                        <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                      {creditRecords
+                        .filter(r => 
+                          r.customerName?.toLowerCase().includes(creditSearchTerm.toLowerCase()) || 
+                          r.description?.toLowerCase().includes(creditSearchTerm.toLowerCase())
+                        )
+                        .map((record) => (
+                        <tr key={record.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-all group">
+                          <td className="px-8 py-6">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center text-emerald-600 font-bold group-hover:scale-110 transition-transform">
+                                {record.customerName?.charAt(0)}
+                              </div>
+                              <span className="font-bold text-gray-900 dark:text-white">{record.customerName}</span>
+                            </div>
+                          </td>
+                          <td className="px-8 py-6 text-sm text-gray-500 font-medium">{record.description}</td>
+                          <td className="px-8 py-6 font-bold text-gray-900 dark:text-white">₦{record.amountOwed?.toLocaleString()}</td>
+                          <td className="px-8 py-6">
+                            <span className={`font-black text-lg ${record.balance > 0 ? "text-red-500" : "text-emerald-500"}`}>
+                                ₦{record.balance?.toLocaleString()}
+                            </span>
+                          </td>
+                          <td className="px-8 py-6">
+                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                                record.balance === 0 ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                            }`}>
+                                {record.balance === 0 ? "Paid" : "Owed"}
+                            </span>
+                          </td>
+                          <td className="px-8 py-6 text-[10px] text-gray-400 font-black uppercase tracking-tighter">
+                            {record.createdAt?.toDate ? record.createdAt.toDate().toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }) : new Date(record.date || Date.now()).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' })}
+                          </td>
+                          <td className="px-8 py-6 text-right">
+                            {record.balance > 0 ? (
+                              <button 
+                                onClick={() => handleMarkAsPaid(record)}
+                                className="p-2 text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-xl font-bold text-xs flex items-center gap-2 transition-all ml-auto"
+                                title="Mark as paid"
+                              >
+                                <CheckCircle2 size={16} /> Mark Paid
+                              </button>
+                            ) : null}
+                          </td>
+                        </tr>
+                      ))}
+                      {creditRecords.length === 0 && (
+                        <tr>
+                            <td colSpan={6} className="p-20 text-center">
+                                <div className="flex flex-col items-center gap-4">
+                                    <div className="w-16 h-16 bg-gray-50 dark:bg-gray-900 rounded-2xl flex items-center justify-center text-gray-300">
+                                        <Wallet size={32} />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-gray-900 dark:text-white">No credit records yet</p>
+                                        <p className="text-sm text-gray-500">Use the Mog Ledger Agent (bottom right) to record your first debt.</p>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+            </div>
           </div>
         )}
 
@@ -1154,7 +1441,7 @@ export default function DashboardPage() {
                       <label htmlFor="image-upload" className="cursor-pointer">
                         {imagePreview ? (
                           <div>
-                            <Image src={imagePreview} alt="Preview" width={100} height={100} className="max-h-24 mx-auto mb-2 rounded-lg" unoptimized />
+                            <Image src={imagePreview.trim()} alt="Preview" width={100} height={100} className="max-h-24 mx-auto mb-2 rounded-lg" style={{ width: 'auto', height: 'auto' }} unoptimized />
                             <p className="text-[10px] text-blue-600 font-bold uppercase">Main Image</p>
                           </div>
                         ) : (
@@ -1171,7 +1458,7 @@ export default function DashboardPage() {
                       <label htmlFor="wholesale-image-upload" className="cursor-pointer">
                         {wholesaleImagePreview ? (
                           <div>
-                            <Image src={wholesaleImagePreview} alt="Wholesale Preview" width={100} height={100} className="max-h-24 mx-auto mb-2 rounded-lg" unoptimized />
+                            <Image src={wholesaleImagePreview.trim()} alt="Wholesale Preview" width={100} height={100} className="max-h-24 mx-auto mb-2 rounded-lg" style={{ width: 'auto', height: 'auto' }} unoptimized />
                             <p className="text-[10px] text-blue-600 font-bold uppercase">Wholesale Image</p>
                           </div>
                         ) : (
@@ -1226,6 +1513,14 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+      {/* AI Agents */}
+      <div className="fixed bottom-6 right-6 z-[100]">
+        {activeTab === "credits" ? (
+          <CreditAIAgent onDebtParsed={handleAICreditParsed} />
+        ) : (
+          <ProductAIAgent onProductParsed={handleAIProductParsed} products={products} />
+        )}
+      </div>
     </div>
   );
 }

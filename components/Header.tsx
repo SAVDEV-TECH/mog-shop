@@ -15,6 +15,14 @@ import { GiHamburgerMenu } from "react-icons/gi"
 import { LiaTimesSolid } from "react-icons/lia"
 import { useRouter } from 'next/navigation'
 import { isAdmin } from '@/lib/adminAuth'
+import { 
+  User, 
+  LayoutDashboard, 
+  ShoppingBag, 
+  LogOut, 
+  Heart,
+  Package
+} from "lucide-react";
 
 const item_navbar = [
   { name: 'home', path: '/' },
@@ -194,42 +202,47 @@ export default function Header() {
                       <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                     </div>
                     {isAdmin(user.email) && (
+                        <Link
+                          href="/dashboard"
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <LayoutDashboard size={16} />
+                          Admin Dashboard
+                        </Link>
+                    )}
                       <Link
-                        href="/dashboard"
-                        className="block px-4 py-2 text-sm text-blue-600 dark:text-blue-400 font-semibold hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors"
+                        href="/my-orders"
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                         onClick={() => setShowUserMenu(false)}
                       >
-                        📊 Admin Dashboard
+                        <Package size={16} />
+                        My Orders
                       </Link>
-                    )}
-                    <Link
-                      href="/my-orders"
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                      onClick={() => setShowUserMenu(false)}
-                    >
-                      📦 My Orders
-                    </Link>
-                    <Link
-                      href="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                      onClick={() => setShowUserMenu(false)}
-                    >
-                      👤 Profile
-                    </Link>
-                    <Link
-                      href="/wishlist"
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                      onClick={() => setShowUserMenu(false)}
-                    >
-                      ❤️ Favourites ({wishlistItems.length})
-                    </Link>
+                      <Link
+                        href="/profile"
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <User size={16} />
+                        Profile
+                      </Link>
+                      <Link
+                        href="/wishlist"
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <Heart size={16} />
+                        Favourites ({wishlistItems.length})
+                      </Link>
                     <hr className="my-2 border-gray-200 dark:border-gray-800" />
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                    >
-                      🚪 Sign Out
-                    </button>
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                      >
+                        <LogOut size={16} />
+                        Sign Out
+                      </button>
                   </div>
                 </>
               )}
@@ -322,29 +335,32 @@ export default function Header() {
                 <li className="border-b border-gray-100 dark:border-gray-800/50">
                   <Link 
                     href="/dashboard" 
-                    className='block px-4 py-4 text-base font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded-lg transition-colors'
+                    className='flex items-center gap-4 px-4 py-4 text-base font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded-lg transition-colors'
                     onClick={closeNav}
                   >
-                    📊 Admin Dashboard
+                    <LayoutDashboard size={20} />
+                    Admin Dashboard
                   </Link>
                 </li>
               )}
               <li className="border-b border-gray-100 dark:border-gray-800/50">
                 <Link 
                    href="/my-orders" 
-                  className='block px-4 py-4 text-base font-medium text-gray-900 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors'
+                  className='flex items-center gap-4 px-4 py-4 text-base font-medium text-gray-900 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors'
                   onClick={closeNav}
                 >
-                  📦 My Orders
+                  <Package size={20} />
+                  My Orders
                 </Link>
               </li>
               <li className="border-b border-gray-100 dark:border-gray-800/50">
                 <Link 
                   href="/profile" 
-                  className='block px-4 py-4 text-base font-medium text-gray-900 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors'
+                  className='flex items-center gap-4 px-4 py-4 text-base font-medium text-gray-900 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors'
                   onClick={closeNav}
                 >
-                  👤 Profile
+                  <User size={20} />
+                  Profile
                 </Link>
               </li>
             </>

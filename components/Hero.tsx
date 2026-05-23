@@ -60,19 +60,23 @@ export default function Hero() {
           </div>
 
           {/* Trust Badges */}
-          <div className="flex flex-wrap items-center gap-8 pt-12">
-            <div className="flex items-center gap-2 text-gray-400">
-              <Truck size={20} className="text-blue-500" />
+          <div className="flex flex-wrap items-center gap-6 pt-12">
+            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-colors">
+              <div className="p-2 bg-blue-500/20 rounded-xl">
+                <Truck size={20} className="text-blue-400" />
+              </div>
               <div className="text-sm">
-                <p className="font-bold text-gray-200">Express Delivery</p>
-                <p className="text-[10px]">Within 24 Hours</p>
+                <p className="font-bold text-gray-100">Express Delivery</p>
+                <p className="text-[10px] text-gray-400">Within 24 Hours</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-gray-400">
-              <ShieldCheck size={20} className="text-purple-500" />
+            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-colors">
+              <div className="p-2 bg-purple-500/20 rounded-xl">
+                <ShieldCheck size={20} className="text-purple-400" />
+              </div>
               <div className="text-sm">
-                <p className="font-bold text-gray-200">Secure Checkout</p>
-                <p className="text-[10px]">100% Guaranteed</p>
+                <p className="font-bold text-gray-100">Secure Checkout</p>
+                <p className="text-[10px] text-gray-400">100% Guaranteed</p>
               </div>
             </div>
           </div>

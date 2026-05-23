@@ -1,11 +1,13 @@
 {
-  "name": "Mogshops",
+  "name": "Mogshops: Premium Groceries & Provisions",
   "short_name": "Mogshops",
-  "description": "Your ultimate shopping destination",
+  "description": "Premium groceries and household provisions delivered to your doorstep. The ultimate shopping destination for your everyday essentials.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "background_color": "#0a0a0a",
+  "theme_color": "#3B82F6",
+  "lang": "en-US",
+  "categories": ["shopping", "food", "lifestyle"],
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
@@ -20,5 +22,35 @@
       "purpose": "maskable"
     }
   ],
-  "orientation": "portrait"
+  "shortcuts": [
+    {
+      "name": "My Orders",
+      "short_name": "Orders",
+      "description": "View your recent purchases",
+      "url": "/my-orders",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Quick Order",
+      "short_name": "Quick",
+      "description": "Order essentials fast",
+      "url": "/quick-order",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ],
+  "orientation": "portrait",
+  "screenshots": [
+    {
+      "src": "/screenshot1.png",
+      "type": "image/png",
+      "sizes": "1080x1920",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshot2.png",
+      "type": "image/png",
+      "sizes": "1920x1080",
+      "form_factor": "wide"
+    }
+  ]
 }
