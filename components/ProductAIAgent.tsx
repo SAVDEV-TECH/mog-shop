@@ -370,7 +370,9 @@ export default function ProductAIAgent({ onProductParsed, products }: {
                         )}
                       </div>
                       {parsedData?.imageUrl && !image && (
-                         <p className="text-[8px] text-green-600 font-bold mt-1 uppercase">✨ Auto-discovered Image</p>
+                         <p className="text-[8px] text-green-600 font-bold mt-1 uppercase flex items-center gap-1">
+                           <Sparkles size={10} /> Auto-discovered Image
+                         </p>
                       )}
                     </div>
                   </div>

@@ -7,7 +7,7 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
-import { Heart } from "lucide-react";
+import { Heart, Package } from "lucide-react";
 
 
 
@@ -136,9 +136,7 @@ function ProdPageContent() {
     if (inWishlist) {
       toast.success(`Removed ${product.name} from wishlist`);
     } else {
-      toast.success(`Added ${product.name} to wishlist!`, {
-        icon: "❤️"
-      });
+      toast.success(`Added ${product.name} to wishlist!`);
     }
   };
 
@@ -172,7 +170,7 @@ function ProdPageContent() {
           className="group relative flex items-center justify-between p-6 bg-gradient-to-r from-blue-600 to-mog rounded-[2rem] overflow-hidden shadow-xl shadow-blue-500/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
         >
           <div className="relative z-10">
-            <h3 className="text-xl md:text-2xl font-black text-white mb-1">Restock Your Shop? 📦</h3>
+            <h3 className="text-xl md:text-2xl font-black text-white mb-1 flex items-center gap-2">Restock Your Shop? <Package size={24} /></h3>
             <p className="text-blue-100/80 text-xs md:text-sm font-medium">Use our Quick-Order Form to refill your inventory in seconds.</p>
           </div>
           <div className="relative z-10 flex items-center gap-2 bg-white/20 backdrop-blur-md px-5 py-3 rounded-2xl text-white font-bold text-sm border border-white/20 group-hover:bg-white/30 transition-all">

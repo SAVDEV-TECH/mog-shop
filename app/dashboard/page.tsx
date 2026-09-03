@@ -1001,11 +1001,11 @@ export default function DashboardPage() {
                             onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                               const target = e.currentTarget as HTMLImageElement;
                               target.onerror = null;
-                              target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%23e5e7eb'/%3E%3Ctext x='24' y='28' font-family='Arial' font-size='24' text-anchor='middle'%3E📦%3C/text%3E%3C/svg%3E";
+                              target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%23e5e7eb'/%3E%3C/svg%3E";
                             }}
                           />
                         ) : (
-                          <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center text-2xl">📦</div>
+                          <div className="w-12 h-12 bg-gray-200 dark:bg-gray-800 text-gray-400 rounded-lg flex items-center justify-center"><Package size={20} /></div>
                         )}
                       </td>
                       <td className="py-4 px-6 font-medium text-blue-600">{product.id.slice(0, 8)}</td>
@@ -1022,7 +1022,7 @@ export default function DashboardPage() {
                             </span>
                             {(product.wholesalePrice || product.wholesaleImageUrl) && (
                                 <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-black w-fit uppercase tracking-tighter">
-                                    📦 Wholesale Active
+                                    Wholesale Active
                                 </span>
                             )}
                         </div>
@@ -1463,7 +1463,7 @@ export default function DashboardPage() {
                           </div>
                         ) : (
                           <div>
-                            <div className="text-2xl mb-1">📦</div>
+                            <div className="flex justify-center mb-1 text-blue-500"><Package size={24} /></div>
                             <p className="text-[10px] text-blue-400 font-bold uppercase">Upload Carton</p>
                           </div>
                         )}

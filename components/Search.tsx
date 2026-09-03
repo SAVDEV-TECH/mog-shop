@@ -202,7 +202,7 @@ const Search: React.FC<SearchProps> = ({ isOpen, isClose }) => {
                                     </div>
                                 ) : (
                                     <div className="text-center py-12">
-                                        <div className="text-4xl mb-4">🔍</div>
+                                        <div className="flex justify-center mb-4"><FiSearch size={40} className="text-gray-400" /></div>
                                         <p className="text-gray-500">No products found for "{searchquery}"</p>
                                     </div>
                                 )}

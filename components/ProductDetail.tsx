@@ -96,14 +96,7 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
       });
       setIsCartOpen(true);
       setIsAdding(false);
-      toast.success(`Success! ${quantity} ${product.name} added to cart`, {
-        icon: "🎉",
-        style: {
-          borderRadius: '10px',
-          background: '#333',
-          color: '#fff',
-        },
-      });
+      toast.success(`Success! ${quantity} ${product.name} added to cart`);
     }, 500);
   };
 
@@ -122,7 +115,7 @@ export default function ProductDetailsPage({ product }: ProductDetailsPageProps)
     if (isWishlisted) {
       toast.error("Removed from favourites");
     } else {
-      toast.success("Added to favourites!", { icon: "❤️" });
+      toast.success("Added to favourites!");
     }
   };
 

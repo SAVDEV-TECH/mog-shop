@@ -79,11 +79,11 @@ export async function POST(request: NextRequest) {
       await transporter.sendMail({
         from: `"MogShop" <${process.env['GMAIL_USER']}>`,
         to: userEmail,
-        subject: '✅ Order Confirmation - Thank You!',
+        subject: 'Order Confirmation - Thank You!',
         html: `
           <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif; background-color: #f9f9f9;">
             <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-              <h1 style="color: #111; margin-bottom: 10px;">Thank You for Your Order! 🎉</h1>
+              <h1 style="color: #111; margin-bottom: 10px;">Thank You for Your Order!</h1>
               <p style="color: #666; margin-bottom: 30px;">We're excited to process your order.</p>
               
               <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -215,13 +215,13 @@ export async function POST(request: NextRequest) {
     if (callMeBotPhone && callMeBotApiKey) {
       try {
         const whatsappMessage = 
-          `🛍️ *New MogShop Order!*\n` +
-          `📦 Order ID: ${orderDetails.id}\n` +
-          `👤 Customer: ${orderDetails.customerName}\n` +
-          `📞 Phone: ${orderDetails.phone}\n` +
-          `💰 Total: ₦${Number(orderDetails.total).toLocaleString()}\n` +
-          `💳 Payment: ${orderDetails.paymentMethod === 'payment-on-delivery' ? 'Cash on Delivery' : 'Paystack'}\n` +
-          `📍 Address: ${orderDetails.deliveryAddress}`;
+          `*New MogShop Order!*\n` +
+          `Order ID: ${orderDetails.id}\n` +
+          `Customer: ${orderDetails.customerName}\n` +
+          `Phone: ${orderDetails.phone}\n` +
+          `Total: ₦${Number(orderDetails.total).toLocaleString()}\n` +
+          `Payment: ${orderDetails.paymentMethod === 'payment-on-delivery' ? 'Cash on Delivery' : 'Paystack'}\n` +
+          `Address: ${orderDetails.deliveryAddress}`;
 
         const encodedMessage = encodeURIComponent(whatsappMessage);
         const callMeBotUrl = `https://api.callmebot.com/whatsapp.php?phone=${callMeBotPhone}&text=${encodedMessage}&apikey=${callMeBotApiKey}`;
@@ -253,7 +253,7 @@ export async function POST(request: NextRequest) {
         
         const itemsListTg = orderDetails.items?.map((item: any) => `- ${item.quantity}x ${item.name} (₦${Number(item.price).toLocaleString()})`).join('\n') || 'No items listed';
 
-        const text = `🛍️ *New Order Received!*\n\n*Order ID:* \`${orderDetails.id}\`\n*Customer:* ${customerName}\n*Phone:* ${customerPhone}\n*Method:* ${paymentMethod}\n*Total:* ₦${totalAmount}\n\n📦 *Items Ordered:*\n${itemsListTg}`;
+        const text = `*New Order Received!*\n\n*Order ID:* \`${orderDetails.id}\`\n*Customer:* ${customerName}\n*Phone:* ${customerPhone}\n*Method:* ${paymentMethod}\n*Total:* ₦${totalAmount}\n\n*Items Ordered:*\n${itemsListTg}`;
         
         const firstItemImage = orderDetails.items?.[0]?.image;
         let tgEndpoint = 'sendMessage';

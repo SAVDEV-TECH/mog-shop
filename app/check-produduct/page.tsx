@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { XCircle, CheckCircle } from "lucide-react";
 
 interface ProductCheck {
   id: string;
@@ -28,7 +29,7 @@ export default function CheckProducts() {
           ...doc.data()
         }));
         setProducts(data);
-        console.log("📦 All products:", data);
+        console.log("All products:", data);
       } catch (error) {
         console.error("Error:", error);
       } finally {
@@ -48,12 +49,16 @@ export default function CheckProducts() {
         
         {products.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-xl text-gray-600 mb-4">❌ No products found in database!</p>
+            <p className="text-xl text-gray-600 mb-4 inline-flex items-center justify-center gap-2">
+              <XCircle className="text-red-500" /> No products found in database!
+            </p>
             <p className="text-gray-500">You need to add products first.</p>
           </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-green-600 font-semibold">✅ Found {products.length} products</p>
+            <p className="text-green-600 font-semibold flex items-center gap-2">
+              <CheckCircle size={18} /> Found {products.length} products
+            </p>
             
             {products.map((product, index) => (
               <div key={product.id} className="border rounded-lg p-4 bg-gray-50">
@@ -74,7 +79,7 @@ export default function CheckProducts() {
                   <div className="col-span-2">
                     <span className="font-medium">Image field:</span>{" "}
                     <code className="bg-yellow-100 px-2 py-1 rounded">
-                      {product.image ? product.image : "❌ EMPTY or MISSING"}
+                      {product.image ? product.image : "EMPTY or MISSING"}
                     </code>
                   </div>
                   <div className="col-span-2">

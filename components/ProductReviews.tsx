@@ -27,9 +27,15 @@ export default function ProductReviews({ productId }: { productId: string }) {
       collection(db, "products", productId, "reviews"),
       orderBy("createdAt", "desc")
     );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setReviews(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review)));
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        setReviews(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review)));
+      },
+      (error) => {
+        console.warn("Reviews listener permission or query error:", error);
+      }
+    );
     return () => unsubscribe();
   }, [productId]);
 

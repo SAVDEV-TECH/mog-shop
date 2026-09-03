@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useWishlist, WishlistItem } from "@/context/WishlistContext";
 import { useCart } from "@/context/CartContext";
 import toast from "react-hot-toast";
-import { Trash2, ShoppingCart, HeartOff } from "lucide-react";
+import { Trash2, ShoppingCart, HeartOff, Heart } from "lucide-react";
 import BackButton from "@/components/BackButton";
 
 export default function WishlistPage() {
@@ -38,7 +38,7 @@ export default function WishlistPage() {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
-            ❤️ My Wishlist
+            <Heart className="text-red-500 fill-red-500" size={28} /> My Wishlist
           </h1>
           <BackButton />
         </div>

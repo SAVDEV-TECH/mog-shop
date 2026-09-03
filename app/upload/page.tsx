@@ -2,6 +2,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
+import { Package } from "lucide-react";
 
 
 export default function UploadPage() {
@@ -68,7 +69,7 @@ export default function UploadPage() {
   return (
     <div className="p-8 max-w-2xl mx-auto bg-white dark:bg-gray-950 rounded-[2rem] shadow-2xl dark:shadow-black border border-gray-100 dark:border-gray-800 mt-10">
       <div className="flex items-center gap-4 mb-8">
-        <div className="w-12 h-12 bg-mog/10 rounded-2xl flex items-center justify-center text-2xl">📦</div>
+        <div className="w-12 h-12 bg-mog/10 text-mog rounded-2xl flex items-center justify-center"><Package size={24} /></div>
         <div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-gray-100">Upload New Product</h1>
           <p className="text-sm text-gray-500">Add retail and wholesale provisions to Mogshops</p>
