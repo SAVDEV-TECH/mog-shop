@@ -382,6 +382,25 @@ export default function Header() {
               </li>
             )
           )}
+          {/* Legal Links */}
+          <li className="border-b border-gray-100 dark:border-gray-800/50">
+            <Link
+              href="/terms-of-service"
+              className='flex items-center gap-4 px-4 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors'
+              onClick={closeNav}
+            >
+              Terms of Service
+            </Link>
+          </li>
+          <li className="border-b border-gray-100 dark:border-gray-800/50">
+            <Link
+              href="/privacy-policy"
+              className='flex items-center gap-4 px-4 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors'
+              onClick={closeNav}
+            >
+              Privacy Policy
+            </Link>
+          </li>
         </ul>
 
         {/* Mobile Bottom Section */}
