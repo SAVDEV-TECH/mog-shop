@@ -21,7 +21,9 @@ import {
   ShoppingBag, 
   LogOut, 
   Heart,
-  Package
+  Package,
+  ChevronDown,
+  FileText
 } from "lucide-react";
 
 const item_navbar = [
@@ -36,6 +38,7 @@ export default function Header() {
   const [showslidesearch, setshowslidesearch] = useState(false)
   const [showNavbar, setshowNavbar] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showInfoMenu, setShowInfoMenu] = useState(false)
   const { state: { items } } = useCart()
   const { state: { items: wishlistItems } } = useWishlist()
   const { user } = useAuth()
@@ -103,6 +106,46 @@ export default function Header() {
               )
             )}
           </ul>
+
+          {/* Legal Dropdown - Desktop */}
+          <div className="relative ml-1">
+            <button
+              onClick={() => setShowInfoMenu(!showInfoMenu)}
+              onBlur={() => setTimeout(() => setShowInfoMenu(false), 150)}
+              className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100 transition-colors rounded-md hover:bg-gray-50 dark:hover:bg-gray-800/50"
+            >
+              Legal
+              <ChevronDown size={14} className={`transition-transform duration-200 ${showInfoMenu ? 'rotate-180' : ''}`} />
+            </button>
+            {showInfoMenu && (
+              <div className="absolute left-0 top-full mt-1 w-52 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 py-1 z-50">
+                <Link
+                  href="/terms-of-service"
+                  className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  onClick={() => setShowInfoMenu(false)}
+                >
+                  <FileText size={15} className="text-gray-400" />
+                  Terms of Service
+                </Link>
+                <Link
+                  href="/privacy-policy"
+                  className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  onClick={() => setShowInfoMenu(false)}
+                >
+                  <FileText size={15} className="text-gray-400" />
+                  Privacy Policy
+                </Link>
+                <Link
+                  href="/account-deletion"
+                  className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  onClick={() => setShowInfoMenu(false)}
+                >
+                  <FileText size={15} className="text-gray-400" />
+                  Account Deletion
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right Icons */}
