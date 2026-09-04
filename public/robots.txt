@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
+Disallow: /payment
+Disallow: /order
+Disallow: /success
+Disallow: /my-orders
+Disallow: /profile
+Disallow: /check-produduct
+Disallow: /upload
+
+Sitemap: https://mog-six.vercel.app/sitemap.xml

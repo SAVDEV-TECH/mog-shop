@@ -2,9 +2,8 @@
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
-
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebaseAdmin';
+import { FieldValue } from 'firebase-admin/firestore';
 import { getAllProducts } from '@/lib/products';
 
 
@@ -67,7 +66,7 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
 
-    // Prepare product data
+    // Prepare product data with Admin SDK serverTimestamp
     const productData = {
       name: String(name).trim(),
       price: parseFloat(price), 
@@ -77,7 +76,7 @@ export async function POST(req: Request) {
       imageUrl: String(imageUrl).trim(),
       wholesaleImageUrl: wholesaleImageUrl ? String(wholesaleImageUrl).trim() : null,
       slug: generateSlug(String(name)),
-      createdAt: serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     };
 
     // Validate price is a valid number
@@ -92,9 +91,7 @@ export async function POST(req: Request) {
 
     console.log("Attempting to save product:", sanitizedData);
 
-    if (!db) throw new Error("Database not initialized");
-  const productsRef = collection(db, 'products');
-  const docRef = await addDoc(productsRef, sanitizedData);
+    const docRef = await adminDb.collection('products').add(sanitizedData);
 
     console.log("Product saved successfully with ID:", docRef.id);
 
@@ -122,14 +119,6 @@ export async function POST(req: Request) {
 
 // === Fetch all products (GET) ===
 export async function GET() {
-  if (!db) {
-    console.error("❌ Firestore DB instance is not available on server.");
-    return NextResponse.json({ 
-      error: "Database connection failed", 
-      details: "Firebase configuration might be missing on the server."
-    }, { status: 503 });
-  }
-
   try {
     const products = await getAllProducts();
     return NextResponse.json(products, { status: 200 });

@@ -4,7 +4,12 @@ import Image from 'next/image'
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import BulkProductUpload from "@/components/BulkProductUpload";
+import dynamic from "next/dynamic";
+
+const BulkProductUpload = dynamic(() => import("@/components/BulkProductUpload"), {
+  ssr: false,
+  loading: () => <div className="h-40 flex items-center justify-center"><div className="w-8 h-8 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin" /></div>
+});
 import {
   collection,
   query,
@@ -44,8 +49,14 @@ import {
   ArrowRightLeft,
   Calendar
 } from "lucide-react";
-import ProductAIAgent from "@/components/ProductAIAgent";
-import CreditAIAgent from "@/components/CreditAIAgent";
+const ProductAIAgent = dynamic(() => import("@/components/ProductAIAgent"), {
+  ssr: false,
+  loading: () => <div className="h-40 flex items-center justify-center"><div className="w-8 h-8 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin" /></div>
+});
+const CreditAIAgent = dynamic(() => import("@/components/CreditAIAgent"), {
+  ssr: false,
+  loading: () => <div className="h-40 flex items-center justify-center"><div className="w-8 h-8 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin" /></div>
+});
 import { motion, AnimatePresence } from "framer-motion";
 
 
@@ -293,20 +304,20 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+
+    if (!user) {
       router.push("/signin");
       return;
     }
 
-    if (user && !isAdmin(user.email)) {
+    if (!isAdmin(user.email)) {
       toast.error("Access denied. Admin only.");
       router.push("/");
       return;
     }
 
-    if (user && isAdmin(user.email)) {
-      setupRealtimeListeners();
-    }
+    setupRealtimeListeners();
     setMounted(true);
 
     // Monitor Firestore connection
@@ -648,6 +659,7 @@ export default function DashboardPage() {
     const styles: { [key: string]: string } = {
       pending: "bg-yellow-100 text-yellow-800",
       paid: "bg-green-100 text-green-800",
+      shipped: "bg-purple-100 text-purple-800",
       delivered: "bg-blue-100 text-blue-800",
       cancelled: "bg-red-100 text-red-800"
     };
@@ -882,6 +894,7 @@ export default function DashboardPage() {
                     <option value="all">All Status</option>
                     <option value="pending">Pending</option>
                     <option value="paid">Paid</option>
+                    <option value="shipped">Shipped</option>
                     <option value="delivered">Delivered</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
@@ -1298,10 +1311,10 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h4 className="font-semibold mb-2">Update Status</h4>
-                <div className="flex space-x-2">
-                  {["pending", "paid", "delivered", "cancelled"].map(status => (
+                <div className="flex flex-wrap gap-2">
+                  {["pending", "paid", "shipped", "delivered", "cancelled"].map(status => (
                     <button key={status} onClick={() => updateOrderStatus(selectedOrder.id, status)}
-                      className={`px-4 py-2 rounded-lg font-medium ${selectedOrder.status === status ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}>
+                      className={`px-4 py-2 rounded-lg font-medium capitalize ${selectedOrder.status === status ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}>
                       {status}
                     </button>
                   ))}

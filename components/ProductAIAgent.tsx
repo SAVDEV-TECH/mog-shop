@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Send, Package, X, Loader2, Check, AlertCircle, Plus, BrainCircuit, Mic, Square, Volume2, Search, Edit } from "lucide-react";
 import toast from "react-hot-toast";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 interface ProductData {
@@ -102,9 +102,13 @@ export default function ProductAIAgent({ onProductParsed, products }: {
         }
       }
         
+      const idToken = await auth.currentUser?.getIdToken();
       const res = await fetch("/api/ai/parse-product", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(idToken ? { "Authorization": `Bearer ${idToken}` } : {})
+        },
         body: JSON.stringify(body),
       });
 

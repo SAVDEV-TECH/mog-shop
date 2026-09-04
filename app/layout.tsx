@@ -12,6 +12,8 @@ import CartDrawer from "@/components/CartDrawer";
 import Footer from "@/components/Footer";
 import Script from "next/script";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
+
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -24,9 +26,34 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "MogShop at Your Service",
-  description: "Your one-stop shop for all things awesome!",
+  metadataBase: new URL('https://mog-six.vercel.app'),
+  title: "Mogshops — Quality Groceries & Provisions in Port Harcourt",
+  description: "Mogshops is your trusted destination for quality groceries, daily provisions, and household essentials in Nigeria. Fast and reliable delivery.",
   manifest: "/manifest.json",
+  keywords: ["groceries", "provisions", "food delivery", "Port Harcourt", "Nigeria", "online store", "Mogshops"],
+  authors: [{ name: "Mogshops" }],
+  openGraph: {
+    type: "website",
+    locale: "en_NG",
+    url: "https://mog-six.vercel.app",
+    siteName: "Mogshops",
+    title: "Mogshops — Quality Groceries & Provisions",
+    description: "Your trusted destination for groceries and provisions in Nigeria. Fast and reliable same-day delivery.",
+    images: [
+      {
+        url: "/mog.png",
+        width: 800,
+        height: 600,
+        alt: "Mogshops",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mogshops — Quality Groceries & Provisions",
+    description: "Your trusted destination for groceries and provisions in Nigeria. Fast and reliable same-day delivery.",
+    images: ["/mog.png"],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -66,9 +93,11 @@ export default function RootLayout({
               <CartProvider> 
                 <Header />
                 <CartDrawer />
-                <PageWrapper>
-                  {children}
-                </PageWrapper>
+                <ErrorBoundary>
+                  <PageWrapper>
+                    {children}
+                  </PageWrapper>
+                </ErrorBoundary>
                 <Footer />
               </CartProvider>
             </WishlistProvider>

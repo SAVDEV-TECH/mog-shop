@@ -118,7 +118,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         const parsedCart = JSON.parse(savedCart);
         if (parsedCart.items && Array.isArray(parsedCart.items)) {
-          dispatch({ type: "SET_CART", items: parsedCart.items });
+          // Validate and sanitize each item to prevent corrupted or malicious localStorage values
+          const validItems = parsedCart.items.filter((item: any) =>
+            item &&
+            typeof item.id === "string" && item.id.trim() !== "" &&
+            typeof item.name === "string" && item.name.trim() !== "" &&
+            typeof item.price === "number" && item.price > 0 && isFinite(item.price) &&
+            typeof item.quantity === "number" && item.quantity > 0 && Number.isInteger(item.quantity)
+          );
+          dispatch({ type: "SET_CART", items: validItems });
         }
       } catch (e) {
         console.error("Failed to load cart from localStorage", e);

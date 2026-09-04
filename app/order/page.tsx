@@ -42,8 +42,8 @@ export default function OrderPage() {
     // Check if auth is settled
     if (authLoading) return;
 
-    // Load from localStorage if exists
-    const storedInfo = localStorage.getItem("customerInfo");
+    // Load from sessionStorage if exists (with fallback to localStorage)
+    const storedInfo = sessionStorage.getItem("customerInfo") || localStorage.getItem("customerInfo");
     if (storedInfo) {
       setCustomerInfo(JSON.parse(storedInfo));
     } else if (user) {
@@ -76,8 +76,8 @@ export default function OrderPage() {
     const { name, value } = e.target;
     setCustomerInfo(prev => {
       const updated = { ...prev, [name]: value };
-      // Save locally as user types to persist work
-      localStorage.setItem("customerInfo", JSON.stringify(updated));
+      // Save locally to sessionStorage to keep session active
+      sessionStorage.setItem("customerInfo", JSON.stringify(updated));
       return updated;
     });
   };
@@ -94,13 +94,24 @@ export default function OrderPage() {
       return;
     }
 
-    // Save final state with metadata
-    localStorage.setItem("customerInfo", JSON.stringify({
+    // Nigerian phone number validation (07x, 08x, 09x - 11 digits or +234)
+    const cleanPhone = customerInfo.phone.replace(/[\s\-]/g, '');
+    const phoneRegex = /^(0[7-9][0-1]\d{8}|\+?234[7-9][0-1]\d{8})$/;
+    if (!phoneRegex.test(cleanPhone)) {
+      toast.error("Please enter a valid Nigerian phone number (e.g. 08012345678)");
+      return;
+    }
+
+    // Save final state with metadata in sessionStorage
+    const orderCustomerPayload = {
       ...customerInfo,
+      phone: cleanPhone,
       userId: user?.uid || "guest",
       userEmail: customerInfo.email,
       isGuest: !user,
-    }));
+    };
+    sessionStorage.setItem("customerInfo", JSON.stringify(orderCustomerPayload));
+    localStorage.removeItem("customerInfo");
 
     router.push("/payment");
   };

@@ -59,7 +59,7 @@ export default function QuickOrderPage() {
   const handleQtyChange = (id: string, value: number) => {
     setQuantities(prev => ({
       ...prev,
-      [id]: Math.max(0, value)
+      [id]: Math.min(999, Math.max(0, value))
     }));
   };
 
@@ -67,6 +67,10 @@ export default function QuickOrderPage() {
     const qty = quantities[product.id] || 0;
     if (qty <= 0) {
       toast.error('Please enter a quantity greater than 0');
+      return;
+    }
+    if (qty > 999) {
+      toast.error('Maximum quantity is 999 per item');
       return;
     }
 
@@ -233,6 +237,8 @@ export default function QuickOrderPage() {
                     </button>
                     <input 
                       type="number" 
+                      min="0"
+                      max="999"
                       value={quantities[p.id] || 0}
                       onChange={(e) => handleQtyChange(p.id, parseInt(e.target.value) || 0)}
                       className="w-12 text-center bg-transparent outline-none font-bold text-sm text-gray-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"

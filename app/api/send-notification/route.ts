@@ -3,6 +3,17 @@ import { NextRequest } from 'next/server';
 
 import { verifyAdminToken } from '@/lib/adminAuthServer';
 
+// Escape user-supplied strings to prevent HTML injection in email templates
+function escapeHtml(str: unknown): string {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { orderDetails, userEmail, isGuest } = await request.json();
@@ -39,10 +50,7 @@ export async function POST(request: NextRequest) {
       // Add timeout settings
       connectionTimeout: 10000, // 10 seconds
       greetingTimeout: 10000,
-      socketTimeout: 10000,
-      tls: {
-        rejectUnauthorized: false
-      }
+      socketTimeout: 10000
     });
 
     // Verify transporter connection
@@ -54,21 +62,28 @@ export async function POST(request: NextRequest) {
       // Continue anyway, but log the error
     }
 
-    // Format items list for email
+    // Format items list for email (escape all user-supplied strings)
+    if (!Array.isArray(orderDetails?.items) || orderDetails.items.length === 0) {
+      return Response.json({ error: 'Invalid order: no items' }, { status: 400 });
+    }
+    if (typeof orderDetails?.total !== 'number' || orderDetails.total <= 0) {
+      return Response.json({ error: 'Invalid order total' }, { status: 400 });
+    }
+
     const itemsList = orderDetails.items
       .map((item: { name: string; quantity: number; price: number; }) => `
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #eee;">
-            ${item.name}
+            ${escapeHtml(item.name)}
           </td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">
-            ${item.quantity}
+            ${escapeHtml(item.quantity)}
           </td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">
-            ₦${item.price.toLocaleString()}
+            ₦${Number(item.price).toLocaleString()}
           </td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">
-            ₦${(item.price * item.quantity).toLocaleString()}
+            ₦${(Number(item.price) * Number(item.quantity)).toLocaleString()}
           </td>
         </tr>
       `)
@@ -88,9 +103,9 @@ export async function POST(request: NextRequest) {
               
               <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h2 style="color: #111; margin-top: 0; font-size: 18px;">Order Details</h2>
-                <p style="margin: 5px 0;"><strong>Order ID:</strong> #${orderDetails.id}</p>
+                <p style="margin: 5px 0;"><strong>Order ID:</strong> #${escapeHtml(orderDetails.id)}</p>
                 <p style="margin: 5px 0;"><strong>Payment Method:</strong> ${orderDetails.paymentMethod === 'payment-on-delivery' ? 'Cash on Delivery' : 'Paystack'}</p>
-                ${orderDetails.paymentReference ? `<p style="margin: 5px 0;"><strong>Payment Reference:</strong> ${orderDetails.paymentReference}</p>` : ''}
+                ${orderDetails.paymentReference ? `<p style="margin: 5px 0;"><strong>Payment Reference:</strong> ${escapeHtml(orderDetails.paymentReference)}</p>` : ''}
                 <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #f59e0b;">Processing</span></p>
               </div>
 
@@ -112,11 +127,11 @@ export async function POST(request: NextRequest) {
               <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin-top: 20px;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                   <span>Subtotal:</span>
-                  <span>₦${(orderDetails.total - 2000).toLocaleString()}</span>
+                  <span>₦${(orderDetails.subtotal ?? (orderDetails.total - (orderDetails.deliveryFee ?? 2000))).toLocaleString()}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                   <span>Delivery Fee:</span>
-                  <span>₦2,000</span>
+                  <span>₦${(orderDetails.deliveryFee ?? 2000).toLocaleString()}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 2px solid #ddd; font-size: 20px; font-weight: bold;">
                   <span>Total:</span>
@@ -126,8 +141,8 @@ export async function POST(request: NextRequest) {
 
               <div style="background: #eff6ff; padding: 20px; border-radius: 8px; margin-top: 30px; border-left: 4px solid #3b82f6;">
                 <h3 style="color: #111; font-size: 16px; margin-top: 0;">Delivery Address</h3>
-                <p style="margin: 5px 0;">${orderDetails.deliveryAddress}</p>
-                <p style="margin: 5px 0;"><strong>Phone:</strong> ${orderDetails.phone}</p>
+                <p style="margin: 5px 0;">${escapeHtml(orderDetails.deliveryAddress || orderDetails.customerInfo?.address)}</p>
+                <p style="margin: 5px 0;"><strong>Phone:</strong> ${escapeHtml(orderDetails.phone || orderDetails.customerInfo?.phone)}</p>
               </div>
 
               <p style="margin-top: 30px; color: #666;">
@@ -141,9 +156,9 @@ export async function POST(request: NextRequest) {
           </div>
         `
       });
-      console.log('✅ Customer email sent successfully');
+      console.log('Customer email sent successfully');
     } catch (emailError) {
-      console.error('❌ Failed to send customer email:', emailError);
+      console.error('Failed to send customer email:', emailError);
       // Don't throw - continue to try admin email
     }
 
@@ -152,27 +167,27 @@ export async function POST(request: NextRequest) {
       await transporter.sendMail({
         from: process.env['GMAIL_USER'],
         to: process.env['ADMIN_EMAIL'] || process.env['GMAIL_USER'],
-        subject: '🔔 New Order Received - Action Required',
+        subject: 'New Order Received - Action Required',
         html: `
           <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif; background-color: #f9f9f9;">
             <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-              <h1 style="color: #111; margin-bottom: 10px;">🔔 New Order Alert!</h1>
+              <h1 style="color: #111; margin-bottom: 10px;">New Order Alert!</h1>
               <p style="color: #666; margin-bottom: 30px;">You have received a new order that requires your attention.</p>
               
               <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
                 <h2 style="color: #111; margin-top: 0; font-size: 18px;">Order Information</h2>
-                <p style="margin: 5px 0;"><strong>Order ID:</strong> #${orderDetails.id}</p>
+                <p style="margin: 5px 0;"><strong>Order ID:</strong> #${escapeHtml(orderDetails.id)}</p>
                 <p style="margin: 5px 0;"><strong>Total Amount:</strong> <span style="color: #10b981; font-size: 20px; font-weight: bold;">₦${orderDetails.total.toLocaleString()}</span></p>
-                <p style="margin: 5px 0;"><strong>Payment Method:</strong> ${orderDetails.paymentMethod === 'payment-on-delivery' ? '💵 Cash on Delivery' : '💳 Paystack'}</p>
-                ${orderDetails.paymentReference ? `<p style="margin: 5px 0;"><strong>Payment Reference:</strong> ${orderDetails.paymentReference}</p>` : ''}
+                <p style="margin: 5px 0;"><strong>Payment Method:</strong> ${orderDetails.paymentMethod === 'payment-on-delivery' ? 'Cash on Delivery' : 'Paystack'}</p>
+                ${orderDetails.paymentReference ? `<p style="margin: 5px 0;"><strong>Payment Reference:</strong> ${escapeHtml(orderDetails.paymentReference)}</p>` : ''}
               </div>
 
               <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h3 style="color: #111; font-size: 16px; margin-top: 0;">Customer Details</h3>
-                <p style="margin: 5px 0;"><strong>Name:</strong> ${orderDetails.customerName}</p>
-                <p style="margin: 5px 0;"><strong>Email:</strong> ${orderDetails.customerEmail}</p>
-                <p style="margin: 5px 0;"><strong>Phone:</strong> ${orderDetails.phone}</p>
-                <p style="margin: 5px 0;"><strong>Delivery Address:</strong> ${orderDetails.deliveryAddress}</p>
+                <p style="margin: 5px 0;"><strong>Name:</strong> ${escapeHtml(orderDetails.customerName || orderDetails.customerInfo?.fullName)}</p>
+                <p style="margin: 5px 0;"><strong>Email:</strong> ${escapeHtml(orderDetails.customerEmail || orderDetails.userEmail)}</p>
+                <p style="margin: 5px 0;"><strong>Phone:</strong> ${escapeHtml(orderDetails.phone || orderDetails.customerInfo?.phone)}</p>
+                <p style="margin: 5px 0;"><strong>Delivery Address:</strong> ${escapeHtml(orderDetails.deliveryAddress || orderDetails.customerInfo?.address)}</p>
               </div>
 
               <h3 style="color: #111; font-size: 16px; margin-top: 30px;">Ordered Items</h3>
@@ -191,9 +206,9 @@ export async function POST(request: NextRequest) {
               </table>
 
               <div style="background: #dcfce7; padding: 20px; border-radius: 8px; margin-top: 30px; border-left: 4px solid #10b981;">
-                <h3 style="color: #111; font-size: 16px; margin-top: 0;">⚡ Action Required</h3>
+                <h3 style="color: #111; font-size: 16px; margin-top: 0;">Action Required</h3>
                 <p style="margin: 5px 0;">Please process this order and prepare it for delivery.</p>
-                <p style="margin: 5px 0;">Contact the customer at <strong>${orderDetails.phone}</strong> to confirm delivery details.</p>
+                <p style="margin: 5px 0;">Contact the customer at <strong>${escapeHtml(orderDetails.phone || orderDetails.customerInfo?.phone)}</strong> to confirm delivery details.</p>
               </div>
 
               <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
@@ -203,7 +218,7 @@ export async function POST(request: NextRequest) {
           </div>
         `
       });
-      console.log('✅ Admin email sent successfully');
+      console.log('Admin email sent successfully');
     } catch (emailError) {
       console.error('❌ Failed to send admin email:', emailError);
     }

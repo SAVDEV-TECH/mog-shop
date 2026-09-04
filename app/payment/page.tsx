@@ -53,8 +53,8 @@ export default function PaymentPage() {
   useEffect(() => {
     if (authLoading) return;
 
-    // Load from localStorage for guest support
-    const storedInfo = localStorage.getItem("customerInfo");
+    // Load from sessionStorage (with localStorage fallback)
+    const storedInfo = sessionStorage.getItem("customerInfo") || localStorage.getItem("customerInfo");
     if (storedInfo) {
       setCustomerInfo(JSON.parse(storedInfo));
     } else {
@@ -81,58 +81,50 @@ export default function PaymentPage() {
     fetchSettings();
   }, [user, authLoading, router]);
 
-  const saveOrderToFirebase = async (method: string, paymentRef?: string) => {
+  const createOrderViaApi = async (method: string, paymentRef?: string) => {
     try {
-      const orderData = {
-        userId: user?.uid || "guest",
-        userEmail: customerInfo?.email || user?.email || "guest",
-        isGuest: !user,
-        customerInfo: customerInfo,
-        items: state.items.map(item => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          image: item.images,
-        })),
-        subtotal: total,
-        deliveryFee: deliveryFee,
-        total: grandTotal,
-        paymentMethod: method,
-        paymentReference: paymentRef || null,
-        status: method === "paystack" ? "paid" : "pending",
-        createdAt: serverTimestamp(),
-      };
-
-      const docRef = await addDoc(collection(db, "orders"), orderData);
-      
-      // ✅ Handle notification logic securely for both users & guests
       const idToken = user ? await user.getIdToken() : null;
-      
-      // Send email notification (Background)
-      fetch('/api/send-notification', {
+      const res = await fetch('/api/create-order', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Authorization': idToken ? `Bearer ${idToken}` : ''
+          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
         },
         body: JSON.stringify({
-          orderDetails: { ...orderData, id: docRef.id },
-          userEmail: customerInfo?.email || user?.email,
-          isGuest: !user
+          items: state.items.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            image: item.images,
+          })),
+          customerInfo,
+          paymentMethod: method,
+          paymentReference: paymentRef || null,
+          deliveryFee,
         }),
-      }).catch(e => console.error("Notification failed", e));
+      });
 
-      return docRef.id;
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to create order');
+      }
+
+      return data.orderId;
     } catch (error) {
-      console.error("Error saving order: ", error);
+      console.error("Error creating order:", error);
       throw error;
     }
   };
 
   const handlePaystackPayment = () => {
+    const paystackKey = paystackPublicKey || process.env['NEXT_PUBLIC_PAYSTACK_KEY'] || "";
+    if (!paystackKey) {
+      toast.error("Payment system not configured. Please contact support.");
+      return;
+    }
+
     setLoading(true);
-    const paystackKey = paystackPublicKey || process.env['NEXT_PUBLIC_PAYSTACK_KEY'] || "pk_test_c96cccb18b1d6540ead612acc09289a21aaee16f";
     
     // @ts-ignore
     const handler = window.PaystackPop.setup({
@@ -143,18 +135,19 @@ export default function PaymentPage() {
       ref: "ORD_" + Math.floor(Math.random() * 1000000000) + Date.now(),
       callback: async function (response: PaystackResponse) {
         try {
-          const orderId = await saveOrderToFirebase("paystack", response.reference);
+          const orderId = await createOrderViaApi("paystack", response.reference);
           dispatch({ type: "CLEAR_CART" });
+          sessionStorage.removeItem("customerInfo");
           localStorage.removeItem("customerInfo");
           router.push(`/success?id=${orderId}`);
-        } catch (error) {
-          toast.error("Error processing order. Please contact support.");
+        } catch (error: any) {
+          toast.error(error.message || "Error processing order. Please contact support.");
         } finally {
           setLoading(false);
         }
       },
       onClose: function () {
-        toast("Payment cancelled", { icon: "ℹ️" });
+        toast("Payment cancelled.");
         setLoading(false);
       },
     });
@@ -164,12 +157,13 @@ export default function PaymentPage() {
   const handlePaymentOnDelivery = async () => {
     setLoading(true);
     try {
-      const orderId = await saveOrderToFirebase("payment-on-delivery");
+      const orderId = await createOrderViaApi("payment-on-delivery");
       dispatch({ type: "CLEAR_CART" });
+      sessionStorage.removeItem("customerInfo");
       localStorage.removeItem("customerInfo");
       router.push(`/success?id=${orderId}`);
-    } catch (error) {
-      toast.error("Error placing order. Please try again.");
+    } catch (error: any) {
+      toast.error(error.message || "Error placing order. Please try again.");
     } finally {
       setLoading(false);
     }

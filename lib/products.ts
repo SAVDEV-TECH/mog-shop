@@ -7,6 +7,7 @@ export interface Product {
   price: number;
   wholesalePrice?: number;
   minWholesaleQty?: number;
+  stock?: number;
   category: string;
   imageUrl: string;
   wholesaleImageUrl?: string;
@@ -37,6 +38,7 @@ export async function getAllProducts(): Promise<Product[]> {
       price: (data['price'] as number) || 0,
       wholesalePrice: (data['wholesalePrice'] as number) || undefined,
       minWholesaleQty: (data['minWholesaleQty'] as number) || undefined,
+      stock: typeof data['stock'] === 'number' ? (data['stock'] as number) : undefined,
       category: (data['category'] as string) || 'Uncategorized',
       imageUrl: (data['imageUrl'] as string) || (data['image'] as string) || '',
       wholesaleImageUrl: (data['wholesaleImageUrl'] as string) || undefined,
@@ -69,8 +71,9 @@ export async function getProductById(id: string): Promise<Product | null> {
     price: (data['price'] as number) || 0,
     wholesalePrice: (data['wholesalePrice'] as number) || undefined,
     minWholesaleQty: (data['minWholesaleQty'] as number) || undefined,
+    stock: typeof data['stock'] === 'number' ? (data['stock'] as number) : undefined,
     category: (data['category'] as string) || 'Uncategorized',
-      imageUrl: (data['imageUrl'] as string) || (data['image'] as string) || '',
+    imageUrl: (data['imageUrl'] as string) || (data['image'] as string) || '',
     wholesaleImageUrl: (data['wholesaleImageUrl'] as string) || undefined,
     slug: (data['slug'] as string) || docSnap.id,
     createdAt,
@@ -103,8 +106,9 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     price: (data['price'] as number) || 0,
     wholesalePrice: (data['wholesalePrice'] as number) || undefined,
     minWholesaleQty: (data['minWholesaleQty'] as number) || undefined,
+    stock: typeof data['stock'] === 'number' ? (data['stock'] as number) : undefined,
     category: (data['category'] as string) || 'Uncategorized',
-      imageUrl: (data['imageUrl'] as string) || (data['image'] as string) || '',
+    imageUrl: (data['imageUrl'] as string) || (data['image'] as string) || '',
     wholesaleImageUrl: (data['wholesaleImageUrl'] as string) || undefined,
     slug: (data['slug'] as string) || doc.id,
     createdAt,

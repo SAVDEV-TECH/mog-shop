@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   View,
-  useColorScheme
+  useColorScheme,
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ShoppingCart, Plus, Tag } from 'lucide-react-native';
@@ -101,10 +102,10 @@ export default function HomeScreen() {
           
           <View style={styles.priceContainer}>
             <View style={{ flex: 1, paddingRight: Spacing.one }}>
-              <ThemedText type="defaultSemiBold" style={styles.priceText}>${item.price.toFixed(2)}</ThemedText>
+              <ThemedText type="defaultSemiBold" style={styles.priceText}>₦{item.price.toLocaleString()}</ThemedText>
               {item.wholesalePrice && (
                 <ThemedText type="small" style={styles.wholesalePriceText} numberOfLines={1}>
-                  Wholesale: ${item.wholesalePrice.toFixed(2)} (Min {item.minWholesaleQty})
+                  Wholesale: ₦{item.wholesalePrice.toLocaleString()} (Min {item.minWholesaleQty})
                 </ThemedText>
               )}
             </View>
@@ -209,9 +210,16 @@ export default function HomeScreen() {
           <ThemedView type="backgroundElement" style={styles.cartPreviewBar}>
             <View style={styles.cartPreviewDetails}>
               <ThemedText type="defaultSemiBold">Cart: {cartState.items.length} items</ThemedText>
-              <ThemedText type="small" style={{ color: colors.textSecondary }}>Total: ${cartTotal.toFixed(2)}</ThemedText>
+              <ThemedText type="small" style={{ color: colors.textSecondary }}>Total: ₦{cartTotal.toLocaleString()}</ThemedText>
             </View>
-            <TouchableOpacity style={[styles.checkoutButton, { backgroundColor: colors.text }]}>
+            <TouchableOpacity 
+              style={[styles.checkoutButton, { backgroundColor: colors.text }]}
+              onPress={() => Alert.alert(
+                "Shopping Cart",
+                `You have ${cartState.items.length} item(s) totaling ₦${cartTotal.toLocaleString()} in your cart. You can complete checkout securely on the web store at mog-six.vercel.app`,
+                [{ text: "OK" }]
+              )}
+            >
               <ThemedText style={{ color: colors.background, fontWeight: 'bold' }}>View Cart</ThemedText>
             </TouchableOpacity>
           </ThemedView>

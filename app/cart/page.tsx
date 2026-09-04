@@ -121,7 +121,11 @@ export default function CartPage() {
                 ))}
 
                 <button
-                  onClick={() => dispatch({ type: "CLEAR_CART" })}
+                  onClick={() => {
+                    if (window.confirm("Are you sure you want to clear your shopping cart?")) {
+                      dispatch({ type: "CLEAR_CART" });
+                    }
+                  }}
                   className="px-6 py-3 text-red-500 font-bold text-sm flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-2xl transition"
                 >
                   <Trash2 size={16} />

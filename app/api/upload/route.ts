@@ -1,7 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { adminDb } from "@/lib/firebaseAdmin";
+import { FieldValue } from "firebase-admin/firestore";
 import { verifyAdminToken } from "@/lib/adminAuthServer";
 
 // Configure Cloudinary (server-side only)
@@ -122,15 +122,14 @@ export async function POST(req: Request) {
       publicId: uploadResult.public_id,
       wholesalePublicId: wholesaleUploadResult?.public_id || null,
       slug: name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, ''),
-      createdAt: serverTimestamp(),
     };
 
     // Sanitize data before saving
     const sanitizedData = sanitizeData(productData);
 
-    // Save product info in Firestore
-    if (!db) throw new Error("Database not initialized");
-    const docRef = await addDoc(collection(db, "products"), sanitizedData);
+    // Save product info in Firestore using Admin SDK
+    const sanitizedWithTimestamp = { ...sanitizedData, createdAt: FieldValue.serverTimestamp() };
+    const docRef = await adminDb.collection("products").add(sanitizedWithTimestamp);
 
     return NextResponse.json({
       message: "Product uploaded successfully",

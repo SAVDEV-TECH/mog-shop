@@ -31,11 +31,18 @@ service cloud.firestore {
 
     // Orders collection rules
     match /orders/{orderId} {
-      // Allow creation for logged in users or guest checkout
-      allow create: if request.auth != null || request.resource.data.isGuest == true; 
+      // Validate order creation: logged-in user or guest with valid fields
+      allow create: if (request.auth != null && request.resource.data.userId == request.auth.uid)
+        || (request.resource.data.isGuest == true 
+            && request.resource.data.total is number 
+            && request.resource.data.total > 0
+            && request.resource.data.items is list
+            && request.resource.data.items.size() > 0);
       
-      // Allow viewing a specific order (e.g. on the Success Page)
-      allow get: if true; 
+      // Only admins, the user who created it, or guest who placed it can view a specific order
+      allow get: if isAdmin() 
+        || (request.auth != null && resource.data.userId == request.auth.uid)
+        || (resource.data.isGuest == true);
 
       // Only admins or the owner can query multiple orders or update them
       allow list, update: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);

@@ -52,11 +52,11 @@ export default function MyOrdersPage() {
           ...doc.data()
         }));
 
-        // Also try fetching by email as fallback
+        // Also try fetching by userEmail as fallback
         if (fetchedOrders.length === 0 && user?.email) {
           const emailQuery = query(
             collection(db, "orders"),
-            where("email", "==", user.email)
+            where("userEmail", "==", user.email)
           );
           const emailSnapshot = await getDocs(emailQuery);
           fetchedOrders = emailSnapshot.docs.map(doc => ({
@@ -194,25 +194,25 @@ export default function MyOrdersPage() {
                          <XCircle size={18} /> This order was cancelled
                        </div>
                      ) : (
-                       <div className="flex items-center justify-between relative px-4">
-                         {/* Connecting Line */}
-                         <div className="absolute left-[30px] right-[30px] top-4 h-1 bg-gray-200 dark:bg-gray-800 -z-10 rounded-full overflow-hidden">
-                           <div className="h-full bg-mog transition-all duration-1000" style={{ width: `${(Math.max(["pending", "paid", "delivered"].indexOf(order.status || 'pending'), 0) / 2) * 100}%` }} />
-                         </div>
-                         
-                         {/* Steps */}
-                         {["pending", "paid", "delivered"].map((step, stepIdx) => {
-                           const isActive = ["pending", "paid", "delivered"].indexOf(order.status || 'pending') >= stepIdx;
-                           return (
-                             <div key={step} className="flex flex-col items-center gap-3">
-                               <div className={`w-8 h-8 rounded-full border-[3px] flex items-center justify-center transition-all duration-500 ease-out ${isActive ? 'bg-mog border-mog shadow-lg shadow-mog/30 scale-110' : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800'}`}>
-                                 {isActive && <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                               </div>
-                               <span className={`text-[10px] font-black uppercase tracking-wider ${isActive ? 'text-mog' : 'text-gray-400'}`}>{step}</span>
-                             </div>
-                           );
-                         })}
-                       </div>
+                        <div className="flex items-center justify-between relative px-4">
+                          {/* Connecting Line */}
+                          <div className="absolute left-[30px] right-[30px] top-4 h-1 bg-gray-200 dark:bg-gray-800 -z-10 rounded-full overflow-hidden">
+                            <div className="h-full bg-mog transition-all duration-1000" style={{ width: `${(Math.max(["pending", "paid", "shipped", "delivered"].indexOf(order.status || 'pending'), 0) / 3) * 100}%` }} />
+                          </div>
+                          
+                          {/* Steps */}
+                          {["pending", "paid", "shipped", "delivered"].map((step, stepIdx) => {
+                            const isActive = ["pending", "paid", "shipped", "delivered"].indexOf(order.status || 'pending') >= stepIdx;
+                            return (
+                              <div key={step} className="flex flex-col items-center gap-3">
+                                <div className={`w-8 h-8 rounded-full border-[3px] flex items-center justify-center transition-all duration-500 ease-out ${isActive ? 'bg-mog border-mog shadow-lg shadow-mog/30 scale-110' : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800'}`}>
+                                  {isActive && <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                </div>
+                                <span className={`text-[10px] font-black uppercase tracking-wider ${isActive ? 'text-mog' : 'text-gray-400'}`}>{step}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
                      )}
                   </div>
                 </motion.div>

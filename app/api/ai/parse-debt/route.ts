@@ -1,12 +1,20 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { verifyAdminToken } from "@/lib/adminAuthServer";
 
 const apiKey = (process.env['GEMINI_API_KEY'] || "").trim();
 const genAI = new GoogleGenerativeAI(apiKey);
 
 export async function POST(req: Request) {
   try {
+    const authHeader = req.headers.get("Authorization");
+    const idToken = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : null;
+    const isAuthorized = await verifyAdminToken(idToken);
+    if (!isAuthorized) {
+      return NextResponse.json({ error: "Unauthorized: Admin access required" }, { status: 401 });
+    }
+
     const { message, audio, mimeType } = await req.json();
 
     if (!apiKey) {

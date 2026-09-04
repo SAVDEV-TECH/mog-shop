@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Send, User, X, Loader2, Check, Mic, Square, Wallet, ArrowRightLeft, Calendar, History } from "lucide-react";
 import toast from "react-hot-toast";
+import { auth } from "@/lib/firebase";
 
 interface DebtData {
   customerName: string;
@@ -73,9 +74,13 @@ export default function CreditAIAgent({ onDebtParsed }: {
         body.mimeType = blob.type;
       }
         
+      const idToken = await auth.currentUser?.getIdToken();
       const res = await fetch("/api/ai/parse-debt", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(idToken ? { "Authorization": `Bearer ${idToken}` } : {})
+        },
         body: JSON.stringify(body),
       });
 
