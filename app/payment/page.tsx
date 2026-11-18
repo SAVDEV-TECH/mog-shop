@@ -81,27 +81,33 @@ export default function PaymentPage() {
     fetchSettings();
   }, [user, authLoading, router]);
 
+  const authHeaders = async (): Promise<Record<string, string>> => {
+    const idToken = user ? await user.getIdToken() : null;
+    return idToken ? { Authorization: `Bearer ${idToken}` } : {};
+  };
+
+  const cartItemsPayload = () =>
+    state.items.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      image: item.images,
+    }));
+
   const createOrderViaApi = async (method: string, paymentRef?: string) => {
     try {
-      const idToken = user ? await user.getIdToken() : null;
       const res = await fetch('/api/create-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
+          ...(await authHeaders())
         },
         body: JSON.stringify({
-          items: state.items.map(item => ({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-            image: item.images,
-          })),
+          items: cartItemsPayload(),
           customerInfo,
           paymentMethod: method,
           paymentReference: paymentRef || null,
-          deliveryFee,
         }),
       });
 
@@ -110,41 +116,81 @@ export default function PaymentPage() {
         throw new Error(data.error || 'Failed to create order');
       }
 
-      return data.orderId;
+      return { orderId: data.orderId as string, accessToken: data.accessToken as string };
     } catch (error) {
       console.error("Error creating order:", error);
       throw error;
     }
   };
 
-  const handlePaystackPayment = () => {
+  const goToReceipt = (orderId: string, accessToken: string) => {
+    dispatch({ type: "CLEAR_CART" });
+    sessionStorage.removeItem("customerInfo");
+    localStorage.removeItem("customerInfo");
+    const params = new URLSearchParams({ id: orderId });
+    if (accessToken) params.set("token", accessToken);
+    router.push(`/success?${params.toString()}`);
+  };
+
+  const completePaystackOrder = async (reference: string) => {
+    try {
+      const { orderId, accessToken } = await createOrderViaApi("paystack", reference);
+      goToReceipt(orderId, accessToken);
+    } catch (error: any) {
+      // The payment went through; the Paystack webhook will still create the order.
+      toast.error(
+        `${error.message || "We couldn't confirm your order yet."} Your payment reference is ${reference}. ` +
+        `If you were charged, your order will be confirmed by email shortly.`,
+        { duration: 12000 }
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePaystackPayment = async () => {
     const paystackKey = paystackPublicKey || process.env['NEXT_PUBLIC_PAYSTACK_KEY'] || "";
     if (!paystackKey) {
       toast.error("Payment system not configured. Please contact support.");
       return;
     }
+    // @ts-ignore
+    if (typeof window === "undefined" || !window.PaystackPop) {
+      toast.error("Payment system is still loading. Please try again in a moment.");
+      return;
+    }
 
     setLoading(true);
-    
+
+    // 1. Create a server-side checkout session (server decides the amount)
+    let checkout: { reference: string; amountKobo: number; email: string };
+    try {
+      const res = await fetch('/api/checkout/paystack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({ items: cartItemsPayload(), customerInfo }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.reference) {
+        throw new Error(data.error || 'Could not start checkout');
+      }
+      checkout = data;
+    } catch (error: any) {
+      toast.error(error.message || "Could not start checkout. Please try again.");
+      setLoading(false);
+      return;
+    }
+
+    // 2. Open Paystack with the server-issued reference and amount
     // @ts-ignore
     const handler = window.PaystackPop.setup({
       key: paystackKey,
-      email: customerInfo!.email || user?.email || '',
-      amount: grandTotal * 100,
+      email: checkout.email || customerInfo!.email || user?.email || '',
+      amount: checkout.amountKobo,
       currency: "NGN",
-      ref: "ORD_" + Math.floor(Math.random() * 1000000000) + Date.now(),
-      callback: async function (response: PaystackResponse) {
-        try {
-          const orderId = await createOrderViaApi("paystack", response.reference);
-          dispatch({ type: "CLEAR_CART" });
-          sessionStorage.removeItem("customerInfo");
-          localStorage.removeItem("customerInfo");
-          router.push(`/success?id=${orderId}`);
-        } catch (error: any) {
-          toast.error(error.message || "Error processing order. Please contact support.");
-        } finally {
-          setLoading(false);
-        }
+      ref: checkout.reference,
+      callback: function (response: PaystackResponse) {
+        completePaystackOrder(response.reference || checkout.reference);
       },
       onClose: function () {
         toast("Payment cancelled.");
@@ -157,11 +203,8 @@ export default function PaymentPage() {
   const handlePaymentOnDelivery = async () => {
     setLoading(true);
     try {
-      const orderId = await createOrderViaApi("payment-on-delivery");
-      dispatch({ type: "CLEAR_CART" });
-      sessionStorage.removeItem("customerInfo");
-      localStorage.removeItem("customerInfo");
-      router.push(`/success?id=${orderId}`);
+      const { orderId, accessToken } = await createOrderViaApi("payment-on-delivery");
+      goToReceipt(orderId, accessToken);
     } catch (error: any) {
       toast.error(error.message || "Error placing order. Please try again.");
     } finally {

@@ -14,18 +14,21 @@ import {
   MapPin
 } from "lucide-react";
 import Link from "next/link";
-import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const orderId = searchParams.get("id");
+  const accessToken = searchParams.get("token");
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
+
     async function fetchOrder() {
       if (!orderId) {
         router.push("/");
@@ -33,10 +36,17 @@ function SuccessContent() {
       }
 
       try {
-        const docRef = doc(db, "orders", orderId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setOrder({ id: docSnap.id, ...docSnap.data() });
+        // Orders are not publicly readable; load via the API using the
+        // receipt token (guests) or the signed-in user's ID token (owners).
+        const idToken = user ? await user.getIdToken() : null;
+        const query = accessToken ? `?token=${encodeURIComponent(accessToken)}` : "";
+        const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}${query}`, {
+          headers: idToken ? { Authorization: `Bearer ${idToken}` } : {},
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setOrder(data.order);
         }
       } catch (error) {
         console.error("Error fetching order:", error);
@@ -46,7 +56,7 @@ function SuccessContent() {
     }
 
     fetchOrder();
-  }, [orderId, router]);
+  }, [orderId, accessToken, user, authLoading, router]);
 
   if (loading) {
     return (
@@ -103,7 +113,7 @@ function SuccessContent() {
                     <div className="flex justify-between">
                       <span className="text-gray-500 font-medium">Placed on</span>
                       <span className="font-bold text-gray-900 dark:text-gray-200">
-                        {order?.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Processing...'}
+                        {order?.createdAt ? new Date(order.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Processing...'}
                       </span>
                     </div>
                     <div className="flex justify-between">
