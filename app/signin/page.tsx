@@ -68,7 +68,7 @@ export default function MogShopAuth() {
     const initGoogleOneTap = () => {
       if (typeof window === 'undefined' || !(window as any).google) return;
       (window as any).google.accounts.id.initialize({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
+        client_id: process.env['NEXT_PUBLIC_GOOGLE_CLIENT_ID'] || '',
         callback: async (response: any) => {
           // Handled via popup/redirect — One Tap just triggers the Google flow
           handleGoogleSignIn();

@@ -7,9 +7,9 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
-import { Heart, Package } from "lucide-react";
+import { Heart, Package, Star } from "lucide-react";
 
-
+const PAGE_SIZE = 16;
 
 interface ProductsParam {
   id: string;
@@ -18,6 +18,8 @@ interface ProductsParam {
   price: number;
   wholesalePrice?: number;
   minWholesaleQty?: number;
+  rating?: number;
+  reviewCount?: number;
   category?: string;
   slug: string;
 }
@@ -32,6 +34,7 @@ function ProdPageContent() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortOption, setSortOption] = useState<string>("");
   const [priceRange, setPriceRange] = useState<number>(1000000);
+  const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
   
   const { dispatch, setIsCartOpen } = useCart();
   const { dispatch: wishlistDispatch, isInWishlist } = useWishlist();
@@ -140,6 +143,11 @@ function ProdPageContent() {
     }
   };
 
+  // Reset pagination when filters change
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [selectedCategory, searchQuery, sortOption, priceRange]);
+
   // Filter products by category and search query
   let filteredProducts = products.filter(product => {
     const matchesCategory = selectedCategory ? product.category === selectedCategory : true;
@@ -149,7 +157,9 @@ function ProdPageContent() {
     return matchesCategory && matchesSearch && matchesPrice;
   });
 
-  if (sortOption === "low-price") {
+  if (sortOption === "top-rated") {
+    filteredProducts.sort((a, b) => (b.rating ?? 5) - (a.rating ?? 5) || (b.reviewCount ?? 0) - (a.reviewCount ?? 0));
+  } else if (sortOption === "low-price") {
     filteredProducts.sort((a, b) => a.price - b.price);
   } else if (sortOption === "high-price") {
     filteredProducts.sort((a, b) => b.price - a.price);
@@ -158,6 +168,8 @@ function ProdPageContent() {
   } else if (sortOption === "z-a") {
     filteredProducts.sort((a, b) => b.name.localeCompare(a.name));
   }
+
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
 
   return (
     <div id="shop-section">
@@ -306,9 +318,10 @@ function ProdPageContent() {
                   Try Again
                 </button>
               </div>
-            ) : filteredProducts.length ? (
+            ) : visibleProducts.length ? (
               // Show products
-              filteredProducts.map((product: ProductsParam, index: number) => {
+              visibleProducts.map((product: ProductsParam, index: number) => {
+                const displayRating = typeof product.rating === "number" ? product.rating : 5.0;
                 return (
                   <div
                     key={product.id}
@@ -344,14 +357,19 @@ function ProdPageContent() {
                       />
                     </div>
                       <div className="pl-2 mt-2 text-sm md:text-base font-medium truncate text-gray-900 dark:text-gray-100">{product.name}</div>
-                      <div className="pl-2 flex flex-col">
+                      <div className="pl-2 flex items-center justify-between mt-0.5">
                         <div className="text-green-700 dark:text-green-500 font-bold">₦{product.price.toLocaleString()}</div>
-                        {product.wholesalePrice && (
-                          <div className="text-[10px] text-blue-600 dark:text-blue-400 font-bold">
-                            Bulk: ₦{product.wholesalePrice.toLocaleString()} ({product.minWholesaleQty}+)
-                          </div>
-                        )}
+                        <div className="flex items-center gap-1 text-[11px] text-amber-500 font-semibold">
+                          <Star size={12} className="fill-amber-400 text-amber-400" />
+                          <span>{displayRating.toFixed(1)}</span>
+                          {product.reviewCount ? <span className="text-gray-400 text-[10px]">({product.reviewCount})</span> : null}
+                        </div>
                       </div>
+                      {product.wholesalePrice && (
+                        <div className="pl-2 text-[10px] text-blue-600 dark:text-blue-400 font-bold">
+                          Bulk: ₦{product.wholesalePrice.toLocaleString()} ({product.minWholesaleQty}+)
+                        </div>
+                      )}
                       <div className="pl-2 mt-1 text-xs text-gray-500 dark:text-gray-400">{product.category}</div>
                       
                       {/* Buttons */}
@@ -384,6 +402,22 @@ function ProdPageContent() {
               </div>
             )}
           </div>
+
+          {/* Load More Pagination */}
+          {!loading && !error && filteredProducts.length > visibleCount && (
+            <div className="mt-10 flex flex-col items-center gap-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Showing {visibleProducts.length} of {filteredProducts.length} products
+              </p>
+              <button
+                type="button"
+                onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+                className="px-8 py-3 bg-mog text-white font-bold rounded-2xl shadow-lg shadow-mog/20 hover:opacity-95 transition text-sm"
+              >
+                Load More Products
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

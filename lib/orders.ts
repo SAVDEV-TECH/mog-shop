@@ -65,6 +65,8 @@ export interface ValidatedItem {
 export interface OrderQuote {
   items: ValidatedItem[];
   subtotal: number;
+  discount?: number;
+  couponCode?: string | null;
   deliveryFee: number;
   total: number;
 }
@@ -159,7 +161,86 @@ export async function resolveOwner(authorizationHeader: string | null, fallbackE
   return { userId: 'guest', userEmail: fallbackEmail, isGuest: true };
 }
 
-// ───────────────────────── Pricing ─────────────────────────
+// ───────────────────────── Pricing & Coupons ─────────────────────────
+
+interface CouponRule {
+  type: 'percent' | 'fixed';
+  value: number;
+  minSubtotal?: number;
+  maxDiscount?: number;
+  active?: boolean;
+  description?: string;
+}
+
+const DEFAULT_COUPONS: Record<string, CouponRule> = {
+  WELCOME10: {
+    type: 'percent',
+    value: 10,
+    minSubtotal: 5000,
+    maxDiscount: 5000,
+    active: true,
+    description: '10% off orders over ₦5,000 (up to ₦5,000)',
+  },
+  MOG500: {
+    type: 'fixed',
+    value: 500,
+    minSubtotal: 10000,
+    active: true,
+    description: '₦500 off orders of ₦10,000 or more',
+  },
+};
+
+export async function evaluateCoupon(
+  rawCode: unknown,
+  subtotal: number
+): Promise<{ code: string; discount: number; description: string } | null> {
+  if (rawCode === undefined || rawCode === null || rawCode === '') return null;
+  if (typeof rawCode !== 'string') throw new OrderError('Invalid promo code');
+  const code = rawCode.trim().toUpperCase();
+  if (!code) return null;
+  if (!/^[A-Z0-9_-]{2,32}$/.test(code)) {
+    throw new OrderError('Invalid promo code');
+  }
+
+  let rule: CouponRule | undefined;
+  try {
+    const snap = await adminDb.collection('coupons').doc(code).get();
+    if (snap.exists) {
+      const d = snap.data()!;
+      rule = {
+        type: d['type'] === 'percent' ? 'percent' : 'fixed',
+        value: Number(d['value']) || 0,
+        minSubtotal: d['minSubtotal'] ? Number(d['minSubtotal']) : undefined,
+        maxDiscount: d['maxDiscount'] ? Number(d['maxDiscount']) : undefined,
+        active: d['active'] !== false,
+        description: typeof d['description'] === 'string' ? d['description'] : undefined,
+      };
+    }
+  } catch {
+    // Fall back to default coupons if Firestore lookup fails
+  }
+  if (!rule) {
+    rule = DEFAULT_COUPONS[code];
+  }
+  if (!rule || rule.active === false || !(rule.value > 0)) {
+    throw new OrderError(`Promo code "${code}" is invalid or expired`);
+  }
+  if (rule.minSubtotal && subtotal < rule.minSubtotal) {
+    throw new OrderError(`Promo code "${code}" requires a minimum subtotal of ₦${rule.minSubtotal.toLocaleString()}`);
+  }
+
+  let discount = rule.type === 'percent' ? Math.round((subtotal * rule.value) / 100) : Math.round(rule.value);
+  if (rule.maxDiscount && discount > rule.maxDiscount) {
+    discount = rule.maxDiscount;
+  }
+  discount = Math.min(discount, subtotal);
+
+  return {
+    code,
+    discount,
+    description: rule.description || (rule.type === 'percent' ? `${rule.value}% discount` : `₦${rule.value.toLocaleString()} discount`),
+  };
+}
 
 async function getDeliveryFee(): Promise<number> {
   try {
@@ -173,7 +254,7 @@ async function getDeliveryFee(): Promise<number> {
 }
 
 /** Recalculate every price from Firestore (never trust the client) and pre-check stock. */
-export async function buildQuote(items: OrderItemInput[]): Promise<OrderQuote> {
+export async function buildQuote(items: OrderItemInput[], rawCouponCode?: unknown): Promise<OrderQuote> {
   const validatedItems: ValidatedItem[] = [];
   let subtotal = 0;
 
@@ -213,8 +294,19 @@ export async function buildQuote(items: OrderItemInput[]): Promise<OrderQuote> {
     });
   }
 
+  const appliedCoupon = await evaluateCoupon(rawCouponCode, subtotal);
+  const discount = appliedCoupon ? appliedCoupon.discount : 0;
+  const couponCode = appliedCoupon ? appliedCoupon.code : null;
   const deliveryFee = await getDeliveryFee();
-  return { items: validatedItems, subtotal, deliveryFee, total: subtotal + deliveryFee };
+
+  return {
+    items: validatedItems,
+    subtotal,
+    discount,
+    couponCode,
+    deliveryFee,
+    total: Math.max(0, subtotal - discount) + deliveryFee,
+  };
 }
 
 // ───────────────────────── Paystack ─────────────────────────
@@ -255,14 +347,15 @@ export function isValidPaystackSignature(rawBody: string, signature: string | nu
 export async function createPaystackCheckout(
   rawItems: unknown,
   rawCustomerInfo: unknown,
-  authorizationHeader: string | null
+  authorizationHeader: string | null,
+  rawCouponCode?: unknown
 ): Promise<{ reference: string; amountKobo: number; email: string; quote: OrderQuote }> {
   const items = validateItems(rawItems);
   const customerInfo = validateCustomerInfo(rawCustomerInfo);
   const owner = await resolveOwner(authorizationHeader, customerInfo.email);
   getPaystackSecret(); // fail fast if payments are not configured
 
-  const quote = await buildQuote(items);
+  const quote = await buildQuote(items, rawCouponCode);
   const reference = `MOG_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
 
   await adminDb.collection('pendingCheckouts').doc(reference).set({
@@ -270,6 +363,8 @@ export async function createPaystackCheckout(
     customerInfo,
     items: quote.items,
     subtotal: quote.subtotal,
+    discount: quote.discount || 0,
+    couponCode: quote.couponCode || null,
     deliveryFee: quote.deliveryFee,
     total: quote.total,
     status: 'pending',
@@ -289,7 +384,7 @@ export async function createPaystackCheckout(
  */
 export async function completePaystackCheckout(
   rawReference: unknown,
-  legacy?: { rawItems: unknown; rawCustomerInfo: unknown; authorizationHeader: string | null }
+  legacy?: { rawItems: unknown; rawCustomerInfo: unknown; authorizationHeader: string | null; rawCouponCode?: unknown }
 ): Promise<PlacedOrder> {
   const reference = validateReference(rawReference);
   const lockRef = adminDb.collection('paymentReferences').doc(reference);
@@ -309,6 +404,8 @@ export async function completePaystackCheckout(
     quote = {
       items: pending['items'],
       subtotal: pending['subtotal'],
+      discount: pending['discount'] || 0,
+      couponCode: pending['couponCode'] || null,
       deliveryFee: pending['deliveryFee'],
       total: pending['total'],
     };
@@ -326,7 +423,7 @@ export async function completePaystackCheckout(
     const items = validateItems(legacy.rawItems);
     customerInfo = validateCustomerInfo(legacy.rawCustomerInfo);
     owner = await resolveOwner(legacy.authorizationHeader, customerInfo.email);
-    quote = await buildQuote(items);
+    quote = await buildQuote(items, legacy.rawCouponCode);
   } else {
     throw new OrderError('Checkout session not found for this payment reference', 404);
   }
@@ -357,12 +454,13 @@ export async function completePaystackCheckout(
 export async function placeCashOnDeliveryOrder(
   rawItems: unknown,
   rawCustomerInfo: unknown,
-  authorizationHeader: string | null
+  authorizationHeader: string | null,
+  rawCouponCode?: unknown
 ): Promise<PlacedOrder> {
   const items = validateItems(rawItems);
   const customerInfo = validateCustomerInfo(rawCustomerInfo);
   const owner = await resolveOwner(authorizationHeader, customerInfo.email);
-  const quote = await buildQuote(items);
+  const quote = await buildQuote(items, rawCouponCode);
 
   return finalizeOrder({
     quote,
@@ -441,6 +539,8 @@ async function finalizeOrder(args: {
       customerInfo,
       items: quote.items,
       subtotal: quote.subtotal,
+      discount: quote.discount || 0,
+      couponCode: quote.couponCode || null,
       deliveryFee: quote.deliveryFee,
       total: quote.total,
       paymentMethod,
@@ -490,7 +590,7 @@ async function finalizeOrder(args: {
   return result;
 }
 
-// ───────────────────────── Reading orders ─────────────────────────
+// ───────────────────────── Reading & Cancelling orders ─────────────────────────
 
 function tokensMatch(a: string, b: string): boolean {
   const ba = Buffer.from(a, 'utf8');
@@ -527,8 +627,70 @@ export async function getOrderForViewer(
     customerInfo: d['customerInfo'],
     items: d['items'],
     subtotal: d['subtotal'],
+    discount: d['discount'] || 0,
+    couponCode: d['couponCode'] || null,
     deliveryFee: d['deliveryFee'],
     total: d['total'],
     createdAt: createdAt ? createdAt.toISOString() : null,
   };
+}
+
+/**
+ * Cancels a pending order and atomically restores product stock in Firestore.
+ * Customers may only cancel orders while status === 'pending'.
+ */
+export async function cancelPendingOrder(
+  orderId: string,
+  accessToken: string | null,
+  viewer: { uid: string | null; isAdmin: boolean }
+): Promise<{ id: string; status: 'cancelled' }> {
+  if (!orderId || orderId.includes('/')) {
+    throw new OrderError('Order not found', 404);
+  }
+  const orderRef = adminDb.collection('orders').doc(orderId);
+
+  await adminDb.runTransaction(async (tx) => {
+    const orderSnap = await tx.get(orderRef);
+    if (!orderSnap.exists) {
+      throw new OrderError('Order not found', 404);
+    }
+    const d = orderSnap.data()!;
+    const allowed =
+      viewer.isAdmin ||
+      (viewer.uid !== null && d['userId'] === viewer.uid) ||
+      (!!accessToken && typeof d['accessToken'] === 'string' && d['accessToken'].length > 0 && tokensMatch(accessToken, d['accessToken']));
+    if (!allowed) {
+      throw new OrderError('Order not found', 404);
+    }
+
+    const currentStatus = (d['status'] as string) || 'pending';
+    if (currentStatus === 'cancelled') {
+      return;
+    }
+    if (currentStatus !== 'pending' && !viewer.isAdmin) {
+      throw new OrderError('Only pending orders can be cancelled', 409);
+    }
+
+    const items: { id?: string; quantity?: number }[] = Array.isArray(d['items']) ? d['items'] : [];
+    const productSnaps = await Promise.all(
+      items.map((item) => (item.id ? tx.get(adminDb.collection('products').doc(item.id)) : Promise.resolve(null)))
+    );
+
+    items.forEach((item, idx) => {
+      const snap = productSnaps[idx];
+      if (!snap || !snap.exists) return;
+      const stock = snap.data()!['stock'];
+      const qty = typeof item.quantity === 'number' && item.quantity > 0 ? item.quantity : 0;
+      if (typeof stock === 'number' && qty > 0) {
+        tx.update(snap.ref, { stock: stock + qty });
+      }
+    });
+
+    tx.update(orderRef, {
+      status: 'cancelled',
+      cancelledAt: FieldValue.serverTimestamp(),
+    });
+  });
+
+  return { id: orderId, status: 'cancelled' };
 }

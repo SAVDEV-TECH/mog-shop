@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, doc, updateDoc } from "firebase/firestore";
 import { useAuth } from "@/context/AuthContext";
 import { Star, Send } from "lucide-react";
 import toast from "react-hot-toast";
@@ -56,6 +56,14 @@ export default function ProductReviews({ productId }: { productId: string }) {
         comment: newComment,
         createdAt: serverTimestamp(),
       });
+      const totalCount = reviews.length + 1;
+      const sumRatings = reviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0) + newRating;
+      const avgRating = Number((sumRatings / totalCount).toFixed(2));
+      updateDoc(doc(db, "products", productId), {
+        rating: avgRating,
+        reviewCount: totalCount,
+      }).catch((err) => console.warn("Could not update product rating aggregate:", err));
+
       setNewComment("");
       setNewRating(5);
       toast.success("Feedback posted successfully!");

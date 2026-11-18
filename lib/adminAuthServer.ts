@@ -9,6 +9,7 @@ export const verifyAdminToken = async (idToken: string | null): Promise<boolean>
   
   try {
     const decodedToken = await adminAuth.verifyIdToken(idToken);
+    if (decodedToken['admin'] === true) return true;
     const email = decodedToken.email;
     return isAdmin(email);
   } catch (error) {

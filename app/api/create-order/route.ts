@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
     }
 
-    const { items, customerInfo, paymentMethod, paymentReference } = body;
+    const { items, customerInfo, paymentMethod, paymentReference, couponCode } = body;
     const authorization = req.headers.get('Authorization');
 
     let order: PlacedOrder;
@@ -29,9 +29,10 @@ export async function POST(req: NextRequest) {
         rawItems: items,
         rawCustomerInfo: customerInfo,
         authorizationHeader: authorization,
+        rawCouponCode: couponCode,
       });
     } else if (paymentMethod === 'payment-on-delivery' || paymentMethod === 'pod') {
-      order = await placeCashOnDeliveryOrder(items, customerInfo, authorization);
+      order = await placeCashOnDeliveryOrder(items, customerInfo, authorization, couponCode);
     } else {
       return NextResponse.json({ error: 'Invalid payment method' }, { status: 400 });
     }

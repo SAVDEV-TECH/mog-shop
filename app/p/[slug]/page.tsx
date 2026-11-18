@@ -1,9 +1,46 @@
+import type { Metadata } from 'next'
 import ProductDetailpage from '@/components/ProductPageWrapper'
 import { notFound } from 'next/navigation'
 import { getAllProducts, getProductBySlug } from '@/lib/products'
 
 interface PageProps {
   params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  try {
+    const { slug } = await params;
+    const product = slug ? await getProductBySlug(slug) : null;
+    if (!product) {
+      return { title: 'Product Not Found | Mogshops' };
+    }
+    const priceText = `₦${Number(product.price).toLocaleString()}`;
+    const title = `${product.name} (${priceText}) — Mogshops`;
+    const description =
+      product.description ||
+      `Buy ${product.name} for ${priceText} on Mogshops. Fast delivery across Port Harcourt & Nigeria.`;
+    const images = product.imageUrl ? [{ url: product.imageUrl, alt: product.name }] : ['/mog.png'];
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        url: `/p/${product.slug}`,
+        type: 'website',
+        images,
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: product.imageUrl ? [product.imageUrl] : ['/mog.png'],
+      },
+    };
+  } catch {
+    return { title: 'Mogshops — Quality Groceries & Provisions' };
+  }
 }
 
 // ✅ Static params generation for better performance

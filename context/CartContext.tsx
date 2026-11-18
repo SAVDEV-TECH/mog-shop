@@ -1,5 +1,8 @@
 "use client";
-import React, { createContext, useContext, useReducer, useMemo, useEffect } from "react";
+import React, { createContext, useContext, useReducer, useMemo, useEffect, useRef } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 // ====== Type definitions ======
 interface CartItem {
@@ -41,6 +44,31 @@ const initialState: CartState = {
 
 // Key for localStorage
 const CART_STORAGE_KEY = "mogshop_cart";
+
+function isValidCartItem(item: any): item is CartItem {
+  return (
+    item &&
+    typeof item.id === "string" && item.id.trim() !== "" &&
+    typeof item.name === "string" && item.name.trim() !== "" &&
+    typeof item.price === "number" && item.price > 0 && isFinite(item.price) &&
+    typeof item.quantity === "number" && item.quantity > 0 && Number.isInteger(item.quantity)
+  );
+}
+
+function sanitizeCartItemForFirestore(item: CartItem): Record<string, unknown> {
+  const clean: Record<string, unknown> = {
+    id: item.id,
+    name: item.name,
+    price: item.price,
+    quantity: item.quantity,
+    slug: item.slug || item.id,
+  };
+  if (item.images) clean['images'] = item.images;
+  if (item.wholesalePrice !== undefined) clean['wholesalePrice'] = item.wholesalePrice;
+  if (item.minWholesaleQty !== undefined) clean['minWholesaleQty'] = item.minWholesaleQty;
+  if (item.wholesaleImageUrl) clean['wholesaleImageUrl'] = item.wholesaleImageUrl;
+  return clean;
+}
 
 // ====== Reducer ======
 function cartReducer(state: CartState, action: CartAction): CartState {
@@ -110,6 +138,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   // Use a temporary state initially for SSR matching
   const [state, dispatch] = useReducer(cartReducer, initialState);
   const [isCartOpen, setIsCartOpen] = React.useState(false);
+  const { user } = useAuth();
+  const syncedUidRef = useRef<string | null>(null);
+  const localLoadedRef = useRef(false);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -118,28 +149,79 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         const parsedCart = JSON.parse(savedCart);
         if (parsedCart.items && Array.isArray(parsedCart.items)) {
-          // Validate and sanitize each item to prevent corrupted or malicious localStorage values
-          const validItems = parsedCart.items.filter((item: any) =>
-            item &&
-            typeof item.id === "string" && item.id.trim() !== "" &&
-            typeof item.name === "string" && item.name.trim() !== "" &&
-            typeof item.price === "number" && item.price > 0 && isFinite(item.price) &&
-            typeof item.quantity === "number" && item.quantity > 0 && Number.isInteger(item.quantity)
-          );
+          const validItems = parsedCart.items.filter(isValidCartItem);
           dispatch({ type: "SET_CART", items: validItems });
         }
       } catch (e) {
         console.error("Failed to load cart from localStorage", e);
       }
     }
+    localLoadedRef.current = true;
   }, []);
 
-  // Save to localStorage when state changes
+  // Merge and sync with Firestore when user signs in
   useEffect(() => {
+    if (!user) {
+      syncedUidRef.current = null;
+      return;
+    }
+    let cancelled = false;
+
+    const syncFromCloud = async () => {
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (cancelled) return;
+        const cloudCart = userDoc.exists() && Array.isArray(userDoc.data()?.['cart'])
+          ? (userDoc.data()!['cart'] as any[]).filter(isValidCartItem)
+          : [];
+
+        // Merge local items with cloud items (keep max quantity per item id)
+        const mergedMap = new Map<string, CartItem>();
+        for (const item of cloudCart) {
+          mergedMap.set(item.id, item);
+        }
+        for (const localItem of state.items) {
+          const existing = mergedMap.get(localItem.id);
+          if (existing) {
+            mergedMap.set(localItem.id, {
+              ...existing,
+              ...localItem,
+              quantity: Math.max(existing.quantity, localItem.quantity),
+            });
+          } else {
+            mergedMap.set(localItem.id, localItem);
+          }
+        }
+        const merged = Array.from(mergedMap.values());
+        syncedUidRef.current = user.uid;
+        dispatch({ type: "SET_CART", items: merged });
+      } catch (e) {
+        console.warn("Could not sync cart from Firestore:", e);
+        syncedUidRef.current = user.uid;
+      }
+    };
+
+    syncFromCloud();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
+
+  // Save to localStorage and Firestore when state changes
+  useEffect(() => {
+    if (!localLoadedRef.current) return;
     if (state.items.length > 0 || localStorage.getItem(CART_STORAGE_KEY)) {
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state));
     }
-  }, [state]);
+    if (user && syncedUidRef.current === user.uid) {
+      setDoc(
+        doc(db, "users", user.uid),
+        { cart: state.items.map(sanitizeCartItemForFirestore) },
+        { merge: true }
+      ).catch((e) => console.warn("Could not persist cart to Firestore:", e));
+    }
+  }, [state, user]);
 
   // Memoized total calculation
   const total = useMemo(

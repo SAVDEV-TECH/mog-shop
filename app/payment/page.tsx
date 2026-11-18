@@ -47,8 +47,39 @@ export default function PaymentPage() {
   const [deliveryFee, setDeliveryFee] = useState(2000);
   const [paystackPublicKey, setPaystackPublicKey] = useState("");
   const [loadingSettings, setLoadingSettings] = useState(true);
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; description: string } | null>(null);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
 
-  const grandTotal = total + deliveryFee;
+  const discountAmount = appliedCoupon ? Math.min(appliedCoupon.discount, total) : 0;
+  const grandTotal = Math.max(0, total - discountAmount) + deliveryFee;
+
+  const handleApplyCoupon = async () => {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) {
+      toast.error("Please enter a promo code");
+      return;
+    }
+    setApplyingCoupon(true);
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, subtotal: total }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.valid) {
+        throw new Error(data.error || "Invalid promo code");
+      }
+      setAppliedCoupon({ code: data.code, discount: data.discount, description: data.description });
+      toast.success(`Promo "${data.code}" applied! (-₦${Number(data.discount).toLocaleString()})`);
+    } catch (err: any) {
+      setAppliedCoupon(null);
+      toast.error(err.message || "Invalid promo code");
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -108,6 +139,7 @@ export default function PaymentPage() {
           customerInfo,
           paymentMethod: method,
           paymentReference: paymentRef || null,
+          couponCode: appliedCoupon?.code || null,
         }),
       });
 
@@ -168,7 +200,11 @@ export default function PaymentPage() {
       const res = await fetch('/api/checkout/paystack', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-        body: JSON.stringify({ items: cartItemsPayload(), customerInfo }),
+        body: JSON.stringify({
+          items: cartItemsPayload(),
+          customerInfo,
+          couponCode: appliedCoupon?.code || null,
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.reference) {
@@ -361,11 +397,60 @@ export default function PaymentPage() {
                 ))}
               </div>
 
+              {/* Promo Code Input */}
+              <div className="border-t border-gray-100 dark:border-gray-800 pt-5 mb-5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                  Promo / Discount Code
+                </label>
+                {appliedCoupon ? (
+                  <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-2.5">
+                    <div>
+                      <span className="text-xs font-black text-green-700 dark:text-green-400">{appliedCoupon.code}</span>
+                      <p className="text-[11px] text-green-600 dark:text-green-500">{appliedCoupon.description}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAppliedCoupon(null);
+                        setCouponInput("");
+                      }}
+                      className="text-xs font-bold text-red-500 hover:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      placeholder="e.g. WELCOME10"
+                      className="flex-1 px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-mog dark:text-white uppercase"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      disabled={applyingCoupon || !couponInput.trim()}
+                      className="px-4 py-2.5 bg-gray-900 dark:bg-gray-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl hover:opacity-90 transition disabled:opacity-50"
+                    >
+                      {applyingCoupon ? "..." : "Apply"}
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-3 border-t border-gray-100 dark:border-gray-800 pt-6 mb-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Subtotal</span>
                   <span className="font-bold text-gray-900 dark:text-gray-200">₦{total.toLocaleString()}</span>
                 </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                    <span>Discount ({appliedCoupon?.code})</span>
+                    <span className="font-bold">-₦{discountAmount.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Shipping</span>
                   <span className="font-bold text-green-600">

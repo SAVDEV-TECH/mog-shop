@@ -14,6 +14,7 @@ import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import Link from "next/link";
 import Image from "next/image";
+import toast from "react-hot-toast";
 
 interface Order {
   id: string;
@@ -31,6 +32,34 @@ export default function MyOrdersPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  const handleCancelOrder = async (orderId: string) => {
+    if (!user) return;
+    if (!window.confirm("Are you sure you want to cancel this pending order?")) return;
+
+    setCancellingId(orderId);
+    try {
+      const idToken = await user.getIdToken();
+      const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}/cancel`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to cancel order");
+      }
+      setOrders(prev => prev.map(o => (o.id === orderId ? { ...o, status: "cancelled" } : o)));
+      toast.success("Order cancelled and stock restored");
+    } catch (err: any) {
+      toast.error(err.message || "Could not cancel order");
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -143,10 +172,13 @@ export default function MyOrdersPage() {
                         </div>
                       </div>
                       <div className="pt-2">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${order.status === "paid"
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                          : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                          }`}>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${
+                          order.status === "paid" || order.status === "delivered"
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : order.status === "cancelled"
+                            ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                            : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                        }`}>
                           {order.status || "Pending"}
                         </span>
                       </div>
@@ -176,13 +208,25 @@ export default function MyOrdersPage() {
                       <p className="text-xl font-black text-gray-900 dark:text-white">
                         ₦{order.total?.toLocaleString()}
                       </p>
-                      <Link
-                        href={`/success?id=${order.id}`}
-                        className="flex items-center gap-2 px-6 py-3 bg-mog/10 text-mog hover:bg-mog hover:text-white rounded-2xl text-xs font-bold transition-all group/btn"
-                      >
-                        View Details
-                        <ChevronRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
-                      </Link>
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        {(order.status || "pending") === "pending" && (
+                          <button
+                            type="button"
+                            onClick={() => handleCancelOrder(order.id)}
+                            disabled={cancellingId === order.id}
+                            className="px-4 py-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white rounded-2xl text-xs font-bold transition-all disabled:opacity-50"
+                          >
+                            {cancellingId === order.id ? "Cancelling..." : "Cancel Order"}
+                          </button>
+                        )}
+                        <Link
+                          href={`/success?id=${order.id}`}
+                          className="flex items-center gap-2 px-6 py-3 bg-mog/10 text-mog hover:bg-mog hover:text-white rounded-2xl text-xs font-bold transition-all group/btn"
+                        >
+                          View Details
+                          <ChevronRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
+                        </Link>
+                      </div>
                     </div>
                   </div>
 

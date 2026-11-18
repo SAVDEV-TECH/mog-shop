@@ -19,7 +19,7 @@ import {
   Loader2
 } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function OrderPage() {
   const { state, total } = useCart();
@@ -47,12 +47,27 @@ export default function OrderPage() {
     if (storedInfo) {
       setCustomerInfo(JSON.parse(storedInfo));
     } else if (user) {
-      // Pre-fill only if no existing stored info
+      // Pre-fill from auth and saved Firestore profile
       setCustomerInfo(prev => ({
         ...prev,
         email: user.email || "",
         fullName: user.displayName || "",
       }));
+      getDoc(doc(db, "users", user.uid))
+        .then(userDoc => {
+          if (userDoc.exists()) {
+            const d = userDoc.data();
+            setCustomerInfo(prev => ({
+              fullName: prev.fullName || (d['fullName'] as string) || user.displayName || "",
+              email: prev.email || (d['email'] as string) || user.email || "",
+              phone: prev.phone || (d['phone'] as string) || "",
+              address: prev.address || (d['address'] as string) || "",
+              city: prev.city || (d['city'] as string) || "",
+              state: prev.state || (d['state'] as string) || "",
+            }));
+          }
+        })
+        .catch(err => console.warn("Could not load saved delivery address:", err));
     }
 
     // Fetch store settings
@@ -112,6 +127,23 @@ export default function OrderPage() {
     };
     sessionStorage.setItem("customerInfo", JSON.stringify(orderCustomerPayload));
     localStorage.removeItem("customerInfo");
+
+    // Persist delivery details to user's profile so future checkouts auto-fill
+    if (user) {
+      setDoc(
+        doc(db, "users", user.uid),
+        {
+          fullName: customerInfo.fullName.trim(),
+          email: customerInfo.email.trim(),
+          phone: cleanPhone,
+          address: customerInfo.address.trim(),
+          city: customerInfo.city.trim(),
+          state: customerInfo.state.trim() || "Rivers",
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      ).catch(err => console.warn("Could not save delivery details to profile:", err));
+    }
 
     router.push("/payment");
   };

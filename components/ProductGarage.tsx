@@ -30,6 +30,7 @@ function ProductGarage({ setSlidetoleft, slidetoleft, sortOption, setSortOption 
           className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-1.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
         >
           <option value="">Sort by: Recommended</option>
+          <option value="top-rated">Rating: High to Low</option>
           <option value="low-price">Price: Low to High</option>
           <option value="high-price">Price: High to Low</option>
           <option value="a-z">Alphabetical: A-Z</option>

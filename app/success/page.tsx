@@ -175,6 +175,12 @@ function SuccessContent() {
                   ))}
 
                   <div className="border-t border-gray-100 dark:border-gray-800 pt-4 mt-4 space-y-2">
+                    {order?.discount > 0 && (
+                      <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                        <span>Discount {order?.couponCode ? `(${order.couponCode})` : ""}</span>
+                        <span className="font-bold">-₦{Number(order.discount).toLocaleString()}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Shipping</span>
                       <span className="font-bold text-green-600">₦{order?.deliveryFee?.toLocaleString() || '2,000'}</span>

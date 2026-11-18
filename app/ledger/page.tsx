@@ -75,7 +75,7 @@ export default function CreditsPage() {
       if (record.status !== "paid" && record.agreedPaymentDate && !record.remindedAt) {
         const paymentDate = new Date(record.agreedPaymentDate);
         if (today >= paymentDate) {
-           handleSendReminder(record, true);
+           handleSendReminder(record, 'auto');
         }
       }
     });

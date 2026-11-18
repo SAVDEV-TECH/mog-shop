@@ -18,7 +18,8 @@ export async function POST(req: NextRequest) {
     const { reference, amountKobo, email, quote } = await createPaystackCheckout(
       body.items,
       body.customerInfo,
-      req.headers.get('Authorization')
+      req.headers.get('Authorization'),
+      body.couponCode
     );
 
     return NextResponse.json({
@@ -26,6 +27,8 @@ export async function POST(req: NextRequest) {
       amountKobo,
       email,
       subtotal: quote.subtotal,
+      discount: quote.discount || 0,
+      couponCode: quote.couponCode || null,
       deliveryFee: quote.deliveryFee,
       total: quote.total,
     });

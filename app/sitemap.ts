@@ -1,9 +1,10 @@
 import { MetadataRoute } from 'next';
+import { getAllProducts } from '@/lib/products';
 
 const BASE_URL = 'https://mog-six.vercel.app';
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  return [
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: BASE_URL,
       lastModified: new Date(),
@@ -41,4 +42,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.2,
     },
   ];
+
+  try {
+    const products = await getAllProducts();
+    const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
+      url: `${BASE_URL}/p/${product.slug}`,
+      lastModified: product.createdAt ? new Date(product.createdAt) : new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    }));
+    return [...staticRoutes, ...productRoutes];
+  } catch {
+    return staticRoutes;
+  }
 }
